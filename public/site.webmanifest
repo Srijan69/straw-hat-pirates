@@ -1,0 +1,14 @@
+{
+  "name": "Team Straw Hat Pirates - 3D Portfolio",
+  "short_name": "StrawHats",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ],
+  "theme_color": "#070c18",
+  "background_color": "#050811",
+  "display": "standalone"
+}

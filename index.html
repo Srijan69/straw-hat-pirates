@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Team Straw Hat Pirates | 3D Creative Portfolio</title>
+  
+  <!-- SEO Meta Tags -->
+  <meta name="description" content="Elite creative front-end engineering, distributed cloud architecture, and immersive 3D web experiences by Team Straw Hat Pirates.">
+  <meta name="keywords" content="Straw Hat Pirates, Three.js, WebGL, Creative Developer, GSAP, Portfolio, Front-End Specialist, 3D Web">
+  <meta name="author" content="Team Straw Hat Pirates">
+
+  <!-- Open Graph / Social Media -->
+  <meta property="og:title" content="Team Straw Hat Pirates | 3D Creative Portfolio">
+  <meta property="og:description" content="Epic One Piece themed cinematic 3D team portfolio with Gerstner ocean shaders and WebGL craftsmanship.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="/favicon.svg">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="manifest" href="/site.webmanifest">
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="/src/styles/index.css">
+  <link rel="stylesheet" href="/src/styles/components.css">
+  <link rel="stylesheet" href="/src/styles/animations.css">
+</head>
+<body>
+
+  <!-- WebGL Background Canvas -->
+  <canvas id="webgl-canvas" aria-label="3D Grand Line Ocean and Thousand Sunny Scene"></canvas>
+
+  <!-- Atmospheric Overlays -->
+  <div class="cinematic-overlay" aria-hidden="true"></div>
+  <div class="cinematic-grain" aria-hidden="true"></div>
+
+  <!-- Custom Cursor -->
+  <div class="custom-cursor" aria-hidden="true"></div>
+  <div class="cursor-follower" aria-hidden="true"></div>
+
+  <!-- 1. Cinematic Loading Screen -->
+  <div id="loading-screen" role="progressbar" aria-label="Loading Grand Line Voyage">
+    <div class="loader-emblem">
+      <div class="loader-ring"></div>
+      <svg viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="46" fill="#080e1c" stroke="#f59e0b" stroke-width="2"/>
+        <path d="M 22 24 L 78 76 M 22 76 L 78 24" stroke="#f8fafc" stroke-width="6" stroke-linecap="round"/>
+        <ellipse cx="50" cy="53" rx="18" ry="17" fill="#f8fafc"/>
+        <path d="M 40 64 L 40 73 C 40 75, 60 75, 60 73 L 60 64 Z" fill="#f8fafc"/>
+        <line x1="45" y1="65" x2="45" y2="72" stroke="#070c18" stroke-width="1.8"/>
+        <line x1="50" y1="65" x2="50" y2="72" stroke="#070c18" stroke-width="1.8"/>
+        <line x1="55" y1="65" x2="55" y2="72" stroke="#070c18" stroke-width="1.8"/>
+        <circle cx="43" cy="53" r="5" fill="#070c18"/>
+        <circle cx="57" cy="53" r="5" fill="#070c18"/>
+        <ellipse cx="50" cy="42" rx="32" ry="6.5" fill="#eab308" stroke="#b45309" stroke-width="1.2"/>
+        <path d="M 33 42 C 33 26, 67 26, 67 42 Z" fill="#eab308" stroke="#b45309" stroke-width="1.2"/>
+        <path d="M 34 38 C 42 36, 58 36, 66 38 L 66.5 42 C 58 40.5, 42 40.5, 33.5 42 Z" fill="#dc2626"/>
+      </svg>
+    </div>
+
+    <div class="loader-details">
+      <h2 class="loader-title">TEAM STRAW HAT PIRATES</h2>
+      <div class="loader-progress-bar-container">
+        <div class="loader-progress-bar"></div>
+      </div>
+      <span class="loader-percentage">0%</span>
+      <span class="loader-status">INITIALIZING LOG POSE MATRIX...</span>
+    </div>
+  </div>
+
+  <!-- 2. Header & Navigation HUD -->
+  <header class="site-header">
+    <a href="#hero" class="header-brand" aria-label="Straw Hat Pirates Home">
+      <div class="brand-icon">
+        <svg viewBox="0 0 100 100">
+          <ellipse cx="50" cy="53" rx="18" ry="17" fill="#f8fafc"/>
+          <circle cx="43" cy="53" r="5" fill="#070c18"/>
+          <circle cx="57" cy="53" r="5" fill="#070c18"/>
+          <ellipse cx="50" cy="42" rx="32" ry="6.5" fill="#eab308"/>
+          <path d="M 33 42 C 33 26, 67 26, 67 42 Z" fill="#eab308"/>
+          <path d="M 34 38 C 42 36, 58 36, 66 38 L 66.5 42 C 58 40.5, 42 40.5, 33.5 42 Z" fill="#dc2626"/>
+        </svg>
+      </div>
+      <div class="brand-info">
+        <span class="brand-name">STRAW HATS</span>
+        <span class="brand-sub">GRAND LINE CO.</span>
+      </div>
+    </a>
+
+    <nav aria-label="Main Navigation">
+      <ul class="nav-menu">
+        <li><a href="#hero" class="nav-link active">VOYAGE</a></li>
+        <li><a href="#crew" class="nav-link">THE CREW</a></li>
+        <li><a href="#adventures" class="nav-link">ADVENTURES</a></li>
+        <li><a href="#skills" class="nav-link">POWERS</a></li>
+        <li><a href="#contact" class="nav-link">JOIN CREW</a></li>
+      </ul>
+    </nav>
+
+    <div class="header-actions">
+      <div class="hud-coordinates">
+        <span class="dot"></span>
+        <span>3°22'N, 145°18'W</span>
+      </div>
+
+      <button type="button" id="audio-toggle" class="audio-toggle-btn" aria-label="Toggle Ocean Soundscape">
+        <div class="audio-equalizer">
+          <span class="eq-bar"></span>
+          <span class="eq-bar"></span>
+          <span class="eq-bar"></span>
+        </div>
+        <span class="audio-text">AMB: OFF</span>
+      </button>
+
+      <button type="button" class="mobile-nav-toggle" aria-label="Toggle mobile menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Website Content -->
+  <div class="content-wrapper">
+
+    <!-- 3. HERO SECTION -->
+    <section id="hero" class="hero-section">
+      <div class="container">
+        <div class="hero-content">
+          <div class="hero-eyebrow">
+            <span>⚔️</span>
+            <span>GRAND LINE FLAGSHIP CREW</span>
+          </div>
+
+          <h1 class="hero-title">
+            TEAM <span class="text-gradient-gold">STRAW HAT</span> PIRATES
+          </h1>
+
+          <p class="hero-tagline">
+            We are an elite crew of visionary engineers, 3D specialists, and system architects crafting <strong>impenetrable cloud systems</strong> and <strong>cinematic WebGL experiences</strong> across the uncharted digital frontier.
+          </p>
+
+          <div class="hero-actions">
+            <a href="#crew" class="btn btn-primary">
+              <span>ENTER THE ADVENTURE</span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </a>
+            <a href="#adventures" class="btn btn-outline">
+              <span>VIEW EXPEDITIONS</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="container hero-footer-bar">
+        <div class="hero-telemetry">
+          <div class="telemetry-item">
+            <span class="telemetry-label">Active Nakama</span>
+            <span class="telemetry-value">10 SPECIALISTS</span>
+          </div>
+          <div class="telemetry-item">
+            <span class="telemetry-label">Cumulative Bounty</span>
+            <span class="telemetry-value text-gold">฿ 8,816,001,000</span>
+          </div>
+          <div class="telemetry-item">
+            <span class="telemetry-label">Navigation Heading</span>
+            <span class="telemetry-value text-cyan">NEW WORLD / RAFTEL</span>
+          </div>
+        </div>
+
+        <a href="#crew" class="scroll-prompt" aria-label="Scroll Down to Crew">
+          <div class="scroll-mouse">
+            <div class="scroll-wheel"></div>
+          </div>
+          <span class="scroll-text">SET SAIL</span>
+        </a>
+      </div>
+    </section>
+
+    <!-- 4. THE CREW SECTION -->
+    <section id="crew" class="section-wrapper">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-tag">✦ LEGENDARY NAKAMA DOSSIERS ✦</span>
+          <h2 class="section-title">MEET THE <span class="text-gradient-gold">CREW</span></h2>
+          <p class="section-description">
+            Each Straw Hat brings unmatched mastery — from low-latency kernel blades and tactical navigation to mind-bending 3D shaders and unshakeable distributed security.
+          </p>
+        </div>
+
+        <!-- Filter Tabs -->
+        <div class="crew-filter-tabs">
+          <button type="button" class="crew-tab-btn active" data-category="all">ALL NAKAMA (10)</button>
+          <button type="button" class="crew-tab-btn" data-category="command">COMMAND & NAV</button>
+          <button type="button" class="crew-tab-btn" data-category="tech">ENGINEERING & ARCHITECTURE</button>
+          <button type="button" class="crew-tab-btn" data-category="creative">CREATIVE & SENSORY</button>
+        </div>
+
+        <!-- Dynamic Grid of 10 Crew Members -->
+        <div id="crew-grid" class="crew-grid"></div>
+      </div>
+    </section>
+
+    <!-- 5. OUR ADVENTURES (PROJECTS) -->
+    <section id="adventures" class="section-wrapper">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-tag">✦ GRAND LINE EXPEDITIONS ✦</span>
+          <h2 class="section-title">OUR <span class="text-gradient-cyan">ADVENTURES</span></h2>
+          <p class="section-description">
+            Battle-tested expeditions across the Grand Line. We engineer resilient architectures and immersive digital realms that rewrite the rules of modern web technology.
+          </p>
+        </div>
+
+        <!-- Project Filters -->
+        <div class="projects-filter">
+          <button type="button" class="filter-btn active" data-filter="all">ALL EXPEDITIONS</button>
+          <button type="button" class="filter-btn" data-filter="webgl">3D & WEBGL</button>
+          <button type="button" class="filter-btn" data-filter="ai">AUTONOMOUS AI</button>
+          <button type="button" class="filter-btn" data-filter="architecture">CLOUD ARCHITECTURE</button>
+          <button type="button" class="filter-btn" data-filter="security">CYBER SECURITY</button>
+        </div>
+
+        <!-- Projects Grid -->
+        <div id="projects-grid" class="projects-grid"></div>
+      </div>
+    </section>
+
+    <!-- 6. SKILLS & POWERS (HAKI MATRIX) -->
+    <section id="skills" class="section-wrapper">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-tag">✦ HAKI & DEVIL FRUIT AWAKENINGS ✦</span>
+          <h2 class="section-title">POWERS & <span class="text-gradient-gold">CAPABILITIES</span></h2>
+          <p class="section-description">
+            Our technological discipline is forged in high-stakes voyages. We command the three colors of Haki alongside cutting-edge modern web capabilities.
+          </p>
+        </div>
+
+        <!-- Skills Matrix -->
+        <div id="skills-matrix" class="skills-matrix"></div>
+      </div>
+    </section>
+
+    <!-- 7. JOIN THE CREW (CONTACT TERMINAL) -->
+    <section id="contact" class="section-wrapper">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-tag">✦ ENCRYPTED LOG POSE CHANNEL ✦</span>
+          <h2 class="section-title">JOIN THE <span class="text-gradient-cyan">CREW</span></h2>
+          <p class="section-description">
+            Whether you need an unstoppable engineering team for your next voyage or wish to enlist as a nakama, transmit your message through our Den Den Mushi transponder.
+          </p>
+        </div>
+
+        <div class="contact-container">
+          <!-- Info Details -->
+          <div class="contact-info-panel">
+            <div class="contact-info-card">
+              <div class="contact-icon-box">🐌</div>
+              <div class="contact-detail-text">
+                <h4>Den Den Mushi Frequency</h4>
+                <p>transponder://strawhat.grandline.eth</p>
+              </div>
+            </div>
+
+            <div class="contact-info-card">
+              <div class="contact-icon-box">⚓</div>
+              <div class="contact-detail-text">
+                <h4>Home Port & Dock</h4>
+                <p>Thousand Sunny Flagship, Grand Line Sector 4</p>
+              </div>
+            </div>
+
+            <div class="contact-info-card">
+              <div class="contact-icon-box">📜</div>
+              <div class="contact-detail-text">
+                <h4>Alliance Inquiries</h4>
+                <p>captain@strawhats.grandline (PGP Encrypted)</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Terminal Form Card -->
+          <div class="terminal-form-card">
+            <div class="terminal-header">
+              <div class="terminal-dots">
+                <span class="terminal-dot red"></span>
+                <span class="terminal-dot yellow"></span>
+                <span class="terminal-dot green"></span>
+              </div>
+              <span class="terminal-channel">CHANNEL: GRAND-LINE-SECURE-V4</span>
+            </div>
+
+            <form id="transponder-form" class="transponder-form">
+              <div class="form-group">
+                <label for="applicant-name" class="form-label">Captain / Adventurer Alias</label>
+                <input type="text" id="applicant-name" class="form-input" placeholder="e.g. Trafalgar D. Law" required>
+              </div>
+
+              <div class="form-group">
+                <label for="applicant-freq" class="form-label">Snail Frequency or Email</label>
+                <input type="email" id="applicant-freq" class="form-input" placeholder="law@heart-pirates.org" required>
+              </div>
+
+              <div class="form-group">
+                <label for="applicant-role" class="form-label">Voyage Objective / Role</label>
+                <select id="applicant-role" class="form-select" required>
+                  <option value="Client Voyage Partnership">Commission a 3D Expedition / Project</option>
+                  <option value="Full-Stack Engineer Nakama">Enlist as Systems Engineer</option>
+                  <option value="WebGL Creative Developer">Enlist as 3D Shader Specialist</option>
+                  <option value="Security / Pentester">Enlist as Cyber Defender</option>
+                  <option value="Other Grand Line Alliance">Propose Strategic Pirate Alliance</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="applicant-message" class="form-label">Expedition Briefing & Mission Coordinates</label>
+                <textarea id="applicant-message" class="form-textarea" placeholder="Describe your project, roadmap, or pirate oath..." required></textarea>
+              </div>
+
+              <div id="form-feedback" class="form-feedback-message"></div>
+
+              <button type="submit" id="submit-btn" class="btn btn-primary" style="width: 100%;">
+                <span>TRANSMIT VIA DEN DEN MUSHI</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 8. SITE FOOTER -->
+    <footer class="site-footer">
+      <div class="container">
+        <div class="footer-top">
+          <div class="footer-brand-block">
+            <div class="brand-icon">
+              <svg viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="46" fill="#080e1c" stroke="#f59e0b" stroke-width="2"/>
+                <ellipse cx="50" cy="53" rx="18" ry="17" fill="#f8fafc"/>
+                <circle cx="43" cy="53" r="5" fill="#070c18"/>
+                <circle cx="57" cy="53" r="5" fill="#070c18"/>
+                <ellipse cx="50" cy="42" rx="32" ry="6.5" fill="#eab308"/>
+                <path d="M 33 42 C 33 26, 67 26, 67 42 Z" fill="#eab308"/>
+                <path d="M 34 38 C 42 36, 58 36, 66 38 L 66.5 42 C 58 40.5, 42 40.5, 33.5 42 Z" fill="#dc2626"/>
+              </svg>
+            </div>
+            <div>
+              <div style="font-family: var(--font-heading); font-size: 1.2rem; font-weight: 700; color: #fff;">
+                TEAM STRAW HAT PIRATES
+              </div>
+              <div style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--gold-light);">
+                FLAGSHIP THOUSAND SUNNY • GRAND LINE
+              </div>
+            </div>
+          </div>
+
+          <ul class="footer-nav">
+            <li><a href="#hero">VOYAGE</a></li>
+            <li><a href="#crew">THE NAKAMA</a></li>
+            <li><a href="#adventures">EXPEDITIONS</a></li>
+            <li><a href="#skills">HAKI MATRIX</a></li>
+            <li><a href="#contact">DEN DEN MUSHI</a></li>
+          </ul>
+
+          <button type="button" class="back-to-top-btn" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+            <span>RETURN TO BOW</span>
+            <span>↑</span>
+          </button>
+        </div>
+
+        <div class="footer-bottom">
+          <span>&copy; 2026 Team Straw Hat Pirates. Built with Three.js, GSAP & Lenis.</span>
+          <span>COORDINATES: LAT 03°22'N • LON 145°18'W • RAFTEL BOUND</span>
+        </div>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- 9. Case Study Modal Dialog -->
+  <div id="project-modal" class="project-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modal-project-title">
+    <div class="project-modal-card">
+      <button type="button" class="modal-close-btn" aria-label="Close Case Study">✕</button>
+      
+      <div style="display: flex; gap: 0.75rem; align-items: center; margin-bottom: 1rem;">
+        <span id="modal-project-category" class="badge badge-cyan">AUTONOMOUS AI</span>
+        <span id="modal-project-metric" class="badge">500k+ TPS</span>
+      </div>
+
+      <h3 id="modal-project-title" style="font-family: var(--font-heading); font-size: 2.2rem; font-weight: 800; margin-bottom: 1rem; color: #fff;">
+        Egghead Future OS
+      </h3>
+
+      <p id="modal-project-meta" style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--gold-light); margin-bottom: 1.5rem;">
+        Client: Vegapunk Satellite Labs | Epoch: 2026
+      </p>
+
+      <p id="modal-project-description" style="font-size: 1.1rem; color: var(--text-primary); line-height: 1.7; margin-bottom: 1.5rem;">
+        Description overview...
+      </p>
+
+      <h4 style="font-family: var(--font-mono); font-size: 0.85rem; letter-spacing: 0.15em; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.75rem;">
+        ARCHITECTURAL BLUEPRINT
+      </h4>
+      <p id="modal-project-details" style="font-size: 0.95rem; color: var(--text-secondary); line-height: 1.7; margin-bottom: 2rem;">
+        Details breakdown...
+      </p>
+
+      <h4 style="font-family: var(--font-mono); font-size: 0.85rem; letter-spacing: 0.15em; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.75rem;">
+        DEPLOYED TECHNOLOGIES
+      </h4>
+      <div id="modal-project-stack" class="project-tags" style="margin-bottom: 2.5rem;"></div>
+
+      <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+        <a href="#contact" class="btn btn-primary" onclick="document.getElementById('project-modal').classList.remove('open')">
+          <span>COMMISSION SIMILAR EXPEDITION</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main JavaScript Entry -->
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

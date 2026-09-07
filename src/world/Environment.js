@@ -21,11 +21,11 @@ export class Environment {
 
   setLights() {
     // 1. Ambient Sky Dome Light (Diffuses rich tropical azure sky light)
-    this.ambientLight = new THREE.AmbientLight('#bae6fd', 1.35);
+    this.ambientLight = new THREE.AmbientLight('#bae6fd', 1.25);
     this.scene.add(this.ambientLight);
 
     // 2. Primary Solar Key Light (Warm radiant Grand Line sun)
-    this.sunLight = new THREE.DirectionalLight('#fff7ed', 3.2);
+    this.sunLight = new THREE.DirectionalLight('#fff7ed', 3.0);
     this.sunLight.position.set(25, 55, -25);
     this.sunLight.castShadow = true;
     this.sunLight.shadow.mapSize.width = 2048;
@@ -40,15 +40,20 @@ export class Environment {
     this.sunLight.shadow.normalBias = 0.02;
     this.scene.add(this.sunLight);
 
-    // 3. Azure Sea Bounce Light
-    this.seaBounceLight = new THREE.DirectionalLight('#38bdf8', 0.85);
-    this.seaBounceLight.position.set(-20, 10, -35);
+    // 3. Azure Sea Bounce Light (Upward bounce reflecting ocean onto hull)
+    this.seaBounceLight = new THREE.DirectionalLight('#7dd3fc', 0.80);
+    this.seaBounceLight.position.set(-6, -5, 12);
     this.scene.add(this.seaBounceLight);
 
-    // 4. Warm Teak & Brass Ship Key Fill
-    this.shipFillLight = new THREE.DirectionalLight('#fffbeb', 2.2);
-    this.shipFillLight.position.set(2, 14, 20);
+    // 4. Warm Port Key Fill (Illuminates wood planking, masts & cannons facing camera)
+    this.shipFillLight = new THREE.DirectionalLight('#fffbeb', 2.1);
+    this.shipFillLight.position.set(-8, 14, 18);
     this.scene.add(this.shipFillLight);
+
+    // 5. Golden Sun Rim Light (Accentuates ship edges, rigging lines and sails)
+    this.shipRimLight = new THREE.DirectionalLight('#fef08a', 1.5);
+    this.shipRimLight.position.set(22, 16, -14);
+    this.scene.add(this.shipRimLight);
   }
 
   setSun() {

@@ -1,48 +1,48 @@
 /* ==========================================================================
-   TEAM STRAW HAT PIRATES - DESIGN SYSTEM & GLOBAL STYLES
+   TEAM STRAW HAT PIRATES - DESIGN SYSTEM & GLOBAL STYLES (LIGHT THEME)
    ========================================================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Cinzel+Decorative:wght@700;900&family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap');
 
 :root {
-  /* Color Palette: Dark Grand Line Ocean & Celestial Night */
-  --bg-primary: #04070e;
-  --bg-secondary: #070d1a;
-  --bg-tertiary: #0c1529;
-  --bg-surface: rgba(12, 21, 41, 0.7);
-  --bg-surface-elevated: rgba(18, 30, 58, 0.85);
+  /* Color Palette: Daylight Grand Line Ocean & Modern Luxury Ivory */
+  --bg-primary: #f8fafc;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #f1f5f9;
+  --bg-surface: rgba(255, 255, 255, 0.88);
+  --bg-surface-elevated: rgba(255, 255, 255, 0.96);
   
-  /* Signature One Piece / Straw Hat Accents */
-  --gold-primary: #f59e0b;
-  --gold-light: #fcd34d;
-  --gold-dark: #b45309;
-  --gold-glow: rgba(245, 158, 11, 0.35);
+  /* Signature One Piece / Straw Hat Accents (High Contrast Gold) */
+  --gold-primary: #d97706;
+  --gold-light: #b45309;
+  --gold-dark: #78350f;
+  --gold-glow: rgba(217, 119, 6, 0.22);
 
-  /* Marine Bioluminescence / Celestial Azure */
-  --cyan-primary: #00f0ff;
-  --cyan-light: #7dd3fc;
-  --cyan-dark: #0284c7;
-  --cyan-glow: rgba(0, 240, 255, 0.28);
+  /* Marine Azure / Cerulean Cyan */
+  --cyan-primary: #0284c7;
+  --cyan-light: #0369a1;
+  --cyan-dark: #075985;
+  --cyan-glow: rgba(2, 132, 199, 0.2);
 
   /* Conqueror's Haki Crimson */
-  --crimson-primary: #ef4444;
-  --crimson-glow: rgba(239, 68, 68, 0.35);
+  --crimson-primary: #dc2626;
+  --crimson-glow: rgba(220, 38, 38, 0.22);
 
   /* Text Colors */
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
   --text-muted: #64748b;
-  --text-inverse: #030712;
+  --text-inverse: #ffffff;
 
   /* Glassmorphism Borders & Shadows */
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-focus: rgba(245, 158, 11, 0.5);
-  --border-cyan: rgba(0, 240, 255, 0.4);
+  --border-subtle: rgba(226, 232, 240, 0.85);
+  --border-focus: rgba(217, 119, 6, 0.55);
+  --border-cyan: rgba(2, 132, 199, 0.4);
   --glass-blur: blur(16px);
-  --shadow-sm: 0 4px 20px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.7);
-  --shadow-gold: 0 0 30px rgba(245, 158, 11, 0.25);
-  --shadow-cyan: 0 0 30px rgba(0, 240, 255, 0.25);
+  --shadow-sm: 0 4px 16px rgba(15, 23, 42, 0.05);
+  --shadow-lg: 0 14px 36px -4px rgba(15, 23, 42, 0.09);
+  --shadow-gold: 0 10px 25px rgba(217, 119, 6, 0.18);
+  --shadow-cyan: 0 10px 25px rgba(2, 132, 199, 0.15);
 
   /* Typography */
   --font-display: 'Cinzel Decorative', 'Cinzel', serif;
@@ -117,7 +117,7 @@ body {
   outline: none;
 }
 
-/* Vignette & Grain Overlay for Cinematic Atmosphere */
+/* Light Vignette & Subtle Warm Sky Haze */
 .cinematic-overlay {
   position: fixed;
   top: 0;
@@ -126,7 +126,7 @@ body {
   height: 100vh;
   pointer-events: none;
   z-index: 2;
-  background: radial-gradient(circle at center, transparent 40%, rgba(4, 7, 14, 0.82) 100%);
+  background: radial-gradient(circle at center, transparent 55%, rgba(241, 245, 249, 0.35) 100%);
 }
 
 .cinematic-grain {
@@ -137,24 +137,24 @@ body {
   height: 100vh;
   pointer-events: none;
   z-index: 3;
-  opacity: 0.035;
+  opacity: 0.02;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
 }
 
-/* Custom Interactive Cursor */
+/* Custom Interactive Cursor (Light Mode) */
 .custom-cursor {
   position: fixed;
   top: 0;
   left: 0;
   width: 8px;
   height: 8px;
-  background-color: var(--gold-light);
+  background-color: var(--gold-primary);
   border-radius: 50%;
   pointer-events: none;
   z-index: 9999;
   transform: translate(-50%, -50%);
   transition: width 0.2s, height 0.2s, background-color 0.2s;
-  box-shadow: 0 0 10px var(--gold-glow);
+  box-shadow: 0 0 8px var(--gold-glow);
 }
 
 .cursor-follower {
@@ -175,14 +175,14 @@ body {
   width: 14px;
   height: 14px;
   background-color: var(--cyan-primary);
-  box-shadow: 0 0 15px var(--cyan-glow);
+  box-shadow: 0 0 12px var(--cyan-glow);
 }
 
 .cursor-hover .cursor-follower {
   width: 54px;
   height: 54px;
   border-color: var(--cyan-primary);
-  background-color: rgba(0, 240, 255, 0.08);
+  background-color: rgba(2, 132, 199, 0.08);
 }
 
 @media (pointer: coarse) {
@@ -193,7 +193,7 @@ body {
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 7px;
 }
 
 ::-webkit-scrollbar-track {
@@ -201,12 +201,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(245, 158, 11, 0.25);
-  border-radius: 3px;
+  background: rgba(217, 119, 6, 0.35);
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(245, 158, 11, 0.6);
+  background: rgba(217, 119, 6, 0.7);
 }
 
 /* Content Wrapper */
@@ -251,13 +251,13 @@ body {
 }
 
 .text-gradient-gold {
-  background: linear-gradient(135deg, #ffffff 0%, #fef3c7 35%, #f59e0b 80%, #b45309 100%);
+  background: linear-gradient(135deg, #78350f 0%, #b45309 40%, #d97706 75%, #f59e0b 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .text-gradient-cyan {
-  background: linear-gradient(135deg, #ffffff 0%, #bae6fd 40%, #00f0ff 80%, #0284c7 100%);
+  background: linear-gradient(135deg, #075985 0%, #0369a1 40%, #0284c7 75%, #0ea5e9 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -284,15 +284,16 @@ body {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-  color: #050811;
-  box-shadow: 0 0 25px rgba(245, 158, 11, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.4);
+  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 15px rgba(217, 119, 6, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.4);
 }
 
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 0 35px rgba(245, 158, 11, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.6);
-  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  box-shadow: 0 8px 25px rgba(217, 119, 6, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.6);
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: #ffffff;
 }
 
 .btn-primary:active {
@@ -300,16 +301,17 @@ body {
 }
 
 .btn-outline {
-  background: rgba(12, 21, 41, 0.5);
+  background: rgba(255, 255, 255, 0.9);
   backdrop-filter: var(--glass-blur);
-  border-color: var(--border-subtle);
+  border-color: rgba(203, 213, 225, 0.9);
   color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
 }
 
 .btn-outline:hover {
-  border-color: var(--cyan-primary);
-  color: var(--cyan-primary);
-  box-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
+  border-color: var(--gold-primary);
+  color: var(--gold-primary);
+  box-shadow: 0 6px 20px rgba(217, 119, 6, 0.2);
   transform: translateY(-2px);
 }
 
@@ -325,19 +327,19 @@ body {
   letter-spacing: 0.1em;
   text-transform: uppercase;
   border-radius: 9999px;
-  background: rgba(245, 158, 11, 0.1);
-  border: 1px solid rgba(245, 158, 11, 0.25);
-  color: var(--gold-light);
+  background: rgba(217, 119, 6, 0.08);
+  border: 1px solid rgba(217, 119, 6, 0.3);
+  color: #b45309;
 }
 
 .badge-cyan {
-  background: rgba(0, 240, 255, 0.1);
-  border-color: rgba(0, 240, 255, 0.3);
+  background: rgba(2, 132, 199, 0.08);
+  border-color: rgba(2, 132, 199, 0.3);
   color: var(--cyan-primary);
 }
 
 .badge-crimson {
-  background: rgba(239, 68, 68, 0.1);
-  border-color: rgba(239, 68, 68, 0.3);
+  background: rgba(220, 38, 38, 0.08);
+  border-color: rgba(220, 38, 38, 0.3);
   color: var(--crimson-primary);
 }

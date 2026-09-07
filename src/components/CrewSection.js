@@ -1,152 +1,77 @@
 export const CREW_MEMBERS = [
   {
-    id: 'luffy',
-    name: 'Monkey D. Luffy',
-    japanese: 'モンキー・D・ルフィ',
-    role: 'Captain & Visionary Director',
+    id: 'manish',
+    name: 'Gundem Manish Reddy',
+    japanese: 'チームリーダー',
+    role: 'Team Leader & Supreme Captain',
     bounty: '3,000,000,000',
     category: 'command',
     icon: '👑',
-    quote: 'If you don\'t take risks, you can\'t create a future. Let\'s build something extraordinary!',
+    quote: 'Leading the fleet across uncharted digital horizons. Taking bold architectural risks to forge the future of software.',
     skills: [
-      { label: 'Leadership Haki', score: '99%' },
-      { label: 'Product Vision', score: '100%' },
-      { label: 'Risk Tolerance', score: '99%' }
+      { label: 'Conqueror\'s Leadership', score: '100%' },
+      { label: 'Strategic Enterprise Vision', score: '99%' },
+      { label: 'Full-Stack Fleet Command', score: '98%' }
     ]
   },
   {
-    id: 'zoro',
-    name: 'Roronoa Zoro',
-    japanese: 'ロロノア・ゾロ',
-    role: 'Principal Systems Architect & Code Blade',
-    bounty: '1,111,000,000',
-    category: 'tech',
+    id: 'srijan',
+    name: 'Kommidi Sai Srijan Reddy',
+    japanese: 'ファーストメイト',
+    role: 'First Mate & Creative 3D Systems Architect',
+    bounty: '1,500,000,000',
+    category: 'creative',
     icon: '⚔️',
-    quote: 'Three-style compiler: zero latency, zero memory leaks, and cuts through any bug without blinking.',
+    quote: 'Wielding Three.js, custom GLSL shaders, and autonomous AI pipelines to build cinematic realities that elevate the web.',
     skills: [
-      { label: 'C++ / Rust Concurrency', score: '98%' },
-      { label: 'Architecture Slicing', score: '97%' },
-      { label: 'Orientation in Code', score: '12%' }
+      { label: 'Creative WebGL & Three.js', score: '99%' },
+      { label: 'Advanced Observation Haki', score: '98%' },
+      { label: 'Autonomous AI Integration', score: '97%' }
     ]
   },
   {
-    id: 'nami',
-    name: 'Nami',
-    japanese: 'ナミ',
-    role: 'Head of Navigation & UI/UX Director',
-    bounty: '366,000,000',
-    category: 'command',
-    icon: '🧭',
-    quote: 'Design isn\'t just what it looks like. It is navigating the stormy Grand Line with elegance and precision.',
-    skills: [
-      { label: 'Interaction Design', score: '99%' },
-      { label: 'Conversion Navigation', score: '96%' },
-      { label: 'Budget Optimization', score: '100%' }
-    ]
-  },
-  {
-    id: 'usopp',
-    name: 'Usopp',
-    japanese: 'ウソップ',
-    role: 'Lead Creative Developer & Storyteller',
-    bounty: '500,000,000',
-    category: 'creative',
-    icon: '🎯',
-    quote: 'Sniper of edge cases. When client deadlines strike from 10 miles away, I hit the deploy button flawlessly.',
-    skills: [
-      { label: 'GSAP Animation', score: '98%' },
-      { label: 'Visual Storytelling', score: '99%' },
-      { label: 'Courage Under Pressure', score: '88%' }
-    ]
-  },
-  {
-    id: 'sanji',
-    name: 'Sanji',
-    japanese: 'サンジ',
-    role: 'Master Chef of Performance & DevOps',
-    bounty: '1,032,000,000',
+    id: 'nikhil',
+    name: 'Gaddam Nikhil Reddy',
+    japanese: 'コアエンジニア',
+    role: 'Core Systems Engineer & Backend Helmsman',
+    bounty: '1,200,000,000',
     category: 'tech',
-    icon: '🔥',
-    quote: 'Serving Michelin-grade server response times. No user will ever starve waiting for a webpage to load.',
+    icon: '⚓',
+    quote: 'Steering high-throughput distributed microservices and resilient cloud engines through the most turbulent production traffic.',
     skills: [
-      { label: 'Kubernetes & CI/CD', score: '96%' },
-      { label: 'Flame Cache Warming', score: '99%' },
-      { label: 'Gentleman UI Polish', score: '95%' }
+      { label: 'Armament Cloud Hardening', score: '98%' },
+      { label: 'Distributed Concurrency', score: '97%' },
+      { label: 'Zero-Downtime Resilience', score: '99%' }
     ]
   },
   {
-    id: 'chopper',
-    name: 'Tony Tony Chopper',
-    japanese: 'トニートニー・チョッパー',
-    role: 'Chief Site Health, Diagnostics & QA',
-    bounty: '1,000',
-    category: 'tech',
-    icon: '🌸',
-    quote: 'There isn\'t any bug or performance illness in the world that cannot be cured with proper test coverage!',
-    skills: [
-      { label: 'Vitest & E2E Healing', score: '97%' },
-      { label: 'Telemetry Monitoring', score: '95%' },
-      { label: 'Cutest Bug Hunter', score: '100%' }
-    ]
-  },
-  {
-    id: 'robin',
-    name: 'Nico Robin',
-    japanese: 'ニコ・ロビン',
-    role: 'Chief Archaeologist & AI / Data Architect',
-    bounty: '930,000,000',
-    category: 'tech',
-    icon: '📚',
-    quote: 'Deciphering the ancient Rio Poneglyphs of legacy enterprise databases and building autonomous AI pipelines.',
-    skills: [
-      { label: 'LLM & Vector DBs', score: '98%' },
-      { label: 'Deep Data Forensics', score: '99%' },
-      { label: 'Clutch Security', score: '94%' }
-    ]
-  },
-  {
-    id: 'franky',
-    name: 'Franky',
-    japanese: 'フランキー',
-    role: 'Chief WebGL & Creative Hardware Engineer',
-    bounty: '394,000,000',
-    category: 'creative',
-    icon: '⭐',
-    quote: 'SUUUUU-PERRR! Building custom GLSL wave shaders and futuristic 3D WebGL experiences powered by pure cola!',
-    skills: [
-      { label: 'Three.js & WebGPU', score: '99%' },
-      { label: 'Custom GLSL Shaders', score: '99%' },
-      { label: 'Super Loud Innovation', score: '100%' }
-    ]
-  },
-  {
-    id: 'brook',
-    name: 'Brook',
-    japanese: 'ブルック',
-    role: 'Audio & Sensory Immersion Director',
-    bounty: '383,000,000',
-    category: 'creative',
-    icon: '🎻',
-    quote: 'Yo-ho-ho-ho! A website without spatial sound and soulful micro-interactions is like a skeleton without a heart!',
-    skills: [
-      { label: 'Web Audio API', score: '98%' },
-      { label: 'Spatial Sound Design', score: '96%' },
-      { label: 'Skeleton Humor', score: '100%' }
-    ]
-  },
-  {
-    id: 'jinbe',
-    name: 'Jinbe',
-    japanese: 'ジンベエ',
-    role: 'Chief Security Officer & Cloud Helmsman',
+    id: 'charan',
+    name: 'Kondakindi Sai Charan Reddy',
+    japanese: 'セキュリティ戦略家',
+    role: 'Senior Security Architect & Tactical Strategist',
     bounty: '1,100,000,000',
-    category: 'command',
-    icon: '🌊',
-    quote: 'Steering the ship through catastrophic DDoS whirlpools. Water-Stream defense against zero-day exploits.',
+    category: 'tech',
+    icon: '🛡️',
+    quote: 'Impenetrable cryptographic shielding and zero-trust fortifications protecting the Grand Fleet\'s digital sovereignty.',
     skills: [
-      { label: 'Zero-Trust Security', score: '99%' },
-      { label: 'Cloud Helmsmanship', score: '97%' },
-      { label: 'Unshakable Loyalty', score: '100%' }
+      { label: 'Threat Modeling & Defense', score: '99%' },
+      { label: 'Zero-Trust Cryptography', score: '98%' },
+      { label: 'Tactical Risk Mitigation', score: '96%' }
+    ]
+  },
+  {
+    id: 'yashwanth',
+    name: 'Yashwanth',
+    japanese: 'ナビゲーター',
+    role: 'Interactive Frontend Navigator & Performance Lead',
+    bounty: '950,000,000',
+    category: 'creative',
+    icon: '🧭',
+    quote: 'Navigating lightning-fast user interactions and frictionless micro-animations for peak client delight and engagement.',
+    skills: [
+      { label: 'Motion & GSAP Choreography', score: '98%' },
+      { label: 'Performance Velocity Tuning', score: '97%' },
+      { label: 'Modern Reactive Frameworks', score: '99%' }
     ]
   }
 ];

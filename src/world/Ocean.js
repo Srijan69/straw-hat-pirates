@@ -27,14 +27,14 @@ export class Ocean {
         varying float vSteepnessSum;
         varying vec2 vUv;
 
-        // 4-Wave Gerstner Wave Formula with exact analytical derivatives
+        // 4-Wave Gerstner Wave Formula
         vec3 gerstnerWave(vec4 wave, vec3 p, inout vec3 tangent, inout vec3 binormal, inout float steepnessAcc) {
           float steepness = wave.z;
           float wavelength = wave.w;
           float k = 2.0 * 3.14159265 / wavelength;
           float c = sqrt(9.8 / k);
           vec2 d = normalize(wave.xy);
-          float f = k * (dot(d, p.xz) - c * uTime * 0.42);
+          float f = k * (dot(d, p.xz) - c * uTime * 0.45);
           float a = steepness / k;
 
           tangent += vec3(
@@ -94,8 +94,8 @@ export class Ocean {
         uniform vec3 uSurfaceColor;
         uniform vec3 uFoamColor;
         uniform vec3 uSubsurfaceColor;
-        uniform vec3 uMoonDirection;
-        uniform vec3 uMoonColor;
+        uniform vec3 uSunDirection;
+        uniform vec3 uSunColor;
         uniform vec3 uFogColor;
 
         varying vec3 vWorldPosition;
@@ -132,51 +132,51 @@ export class Ocean {
 
         void main() {
           vec3 viewDir = normalize(cameraPosition - vWorldPosition);
-          vec3 lightDir = normalize(uMoonDirection);
+          vec3 lightDir = normalize(uSunDirection);
 
-          // Fine micro-ripples perturbing the surface normal
-          vec2 rippleCoord = vWorldPosition.xz * 0.5 + vec2(uTime * 0.07, uTime * 0.04);
+          // Micro-ripples perturbing surface normal
+          vec2 rippleCoord = vWorldPosition.xz * 0.5 + vec2(uTime * 0.08, uTime * 0.05);
           float n1 = fbm(rippleCoord);
-          float n2 = fbm(rippleCoord * 2.2 - vec2(uTime * 0.05));
-          vec3 perturbedNormal = normalize(vNormal + vec3((n1 - 0.5) * 0.14, 0.0, (n2 - 0.5) * 0.14));
+          float n2 = fbm(rippleCoord * 2.2 - vec2(uTime * 0.06));
+          vec3 perturbedNormal = normalize(vNormal + vec3((n1 - 0.5) * 0.12, 0.0, (n2 - 0.5) * 0.12));
 
           // Physical Schlick Fresnel
           float nDotV = max(dot(viewDir, perturbedNormal), 0.0);
-          float f0 = 0.022;
+          float f0 = 0.024;
           float fresnel = f0 + (1.0 - f0) * pow(1.0 - nDotV, 5.0);
 
-          // Deep Water Depth Grading
-          vec3 waterBody = mix(uDepthColor, uMidColor, smoothstep(-1.8, 0.2, vWaveHeight));
-          waterBody = mix(waterBody, uSurfaceColor, smoothstep(0.1, 1.5, vWaveHeight));
+          // Tropical Daytime Depth Grading (Deep Cerulean -> Clear Azure -> Sunlit Turquoise)
+          vec3 waterBody = mix(uDepthColor, uMidColor, smoothstep(-1.8, 0.3, vWaveHeight));
+          waterBody = mix(waterBody, uSurfaceColor, smoothstep(0.1, 1.6, vWaveHeight));
 
-          // Subsurface Scattering (SSS) through wave crests
-          float sssFactor = max(0.0, dot(viewDir, -lightDir)) * smoothstep(0.4, 1.7, vWaveHeight);
-          vec3 sssColor = uSubsurfaceColor * (sssFactor * 0.7);
+          // Subsurface Scattering (SSS) through wave crests facing sunlight
+          float sssFactor = max(0.0, dot(viewDir, -lightDir)) * smoothstep(0.3, 1.6, vWaveHeight);
+          vec3 sssColor = uSubsurfaceColor * (sssFactor * 0.75);
 
-          // Anisotropic Moon Specular Highlight
+          // Brilliant Daytime Sun Specular Highlight
           vec3 halfVector = normalize(lightDir + viewDir);
           float nDotH = max(dot(perturbedNormal, halfVector), 0.0);
-          float moonSpecularSharp = pow(nDotH, 140.0) * 2.8;
-          float moonSpecularBroad = pow(nDotH, 18.0) * 0.25;
-          vec3 specularHighlight = (moonSpecularSharp + moonSpecularBroad) * uMoonColor;
+          float sunSpecularSharp = pow(nDotH, 160.0) * 3.2;
+          float sunSpecularBroad = pow(nDotH, 20.0) * 0.45;
+          vec3 specularHighlight = (sunSpecularSharp + sunSpecularBroad) * uSunColor;
 
-          // Sky Reflection
-          vec3 skyReflection = mix(vec3(0.015, 0.04, 0.09), vec3(0.08, 0.22, 0.42), pow(1.0 - nDotV, 2.2));
+          // Sky Reflection (Bright tropical blue sky)
+          vec3 skyReflection = mix(vec3(0.55, 0.82, 0.98), vec3(0.85, 0.95, 1.0), pow(1.0 - nDotV, 2.0));
 
           // Composite Base Ocean
-          vec3 baseColor = mix(waterBody + sssColor, skyReflection, fresnel * 0.75) + specularHighlight;
+          vec3 baseColor = mix(waterBody + sssColor, skyReflection, fresnel * 0.65) + specularHighlight;
 
-          // Delicate Organic Lace Seafoam on high peaks
-          float crestMask = smoothstep(0.95, 1.7, vWaveHeight + vSteepnessSum * 0.35);
-          float foamNoise = fbm(vWorldPosition.xz * 3.8 + vec2(uTime * 0.15));
-          float foamPattern = smoothstep(0.50, 0.75, foamNoise) * crestMask;
+          // Crisp White Organic Seafoam on wave crests
+          float crestMask = smoothstep(0.9, 1.6, vWaveHeight + vSteepnessSum * 0.35);
+          float foamNoise = fbm(vWorldPosition.xz * 3.8 + vec2(uTime * 0.16));
+          float foamPattern = smoothstep(0.48, 0.75, foamNoise) * crestMask;
 
-          vec3 colorWithFoam = mix(baseColor, uFoamColor, foamPattern * 0.72);
+          vec3 colorWithFoam = mix(baseColor, uFoamColor, foamPattern * 0.82);
 
-          // Atmospheric Distance & Height Fog
+          // Soft Daylight Sea Mist
           float dist = length(cameraPosition - vWorldPosition);
-          float distanceFog = 1.0 - exp(-dist * dist * 0.000075);
-          float heightFog = exp(-vWorldPosition.y * 0.25) * 0.25;
+          float distanceFog = 1.0 - exp(-dist * dist * 0.000045);
+          float heightFog = exp(-vWorldPosition.y * 0.25) * 0.15;
           float totalFog = clamp(distanceFog + heightFog, 0.0, 1.0);
 
           vec3 finalColor = mix(colorWithFoam, uFogColor, totalFog);
@@ -186,14 +186,14 @@ export class Ocean {
       `,
       uniforms: {
         uTime: { value: 0 },
-        uDepthColor: { value: new THREE.Color('#010308') },       // Deep ocean abyss
-        uMidColor: { value: new THREE.Color('#031120') },         // Midnight ocean blue
-        uSurfaceColor: { value: new THREE.Color('#082b40') },     // Luminous deep teal
-        uSubsurfaceColor: { value: new THREE.Color('#0d9488') },  // Emerald cyan SSS
-        uFoamColor: { value: new THREE.Color('#cbd5e1') },        // Silvery nocturnal foam
-        uMoonDirection: { value: new THREE.Vector3(25, 45, -35) },
-        uMoonColor: { value: new THREE.Color('#e0f2fe') },
-        uFogColor: { value: new THREE.Color('#020610') }
+        uDepthColor: { value: new THREE.Color('#0369a1') },       // Deep cerulean
+        uMidColor: { value: new THREE.Color('#0284c7') },         // Rich crystal ocean blue
+        uSurfaceColor: { value: new THREE.Color('#38bdf8') },     // Sunlit tropical turquoise
+        uSubsurfaceColor: { value: new THREE.Color('#2dd4bf') },  // Emerald green SSS
+        uFoamColor: { value: new THREE.Color('#ffffff') },        // Crisp brilliant white seafoam
+        uSunDirection: { value: new THREE.Vector3(25, 55, -25) },
+        uSunColor: { value: new THREE.Color('#fffbeb') },
+        uFogColor: { value: new THREE.Color('#e0f2fe') }          // Soft daylight azure mist
       },
       wireframe: false,
       transparent: false
@@ -211,19 +211,19 @@ export class Ocean {
     const w1_dir = new THREE.Vector2(1.0, 0.35).normalize();
     const w1_k = (2.0 * Math.PI) / 24.0;
     const w1_c = Math.sqrt(9.8 / w1_k);
-    const w1_f = w1_k * (w1_dir.x * x + w1_dir.y * z - w1_c * time * 0.42);
+    const w1_f = w1_k * (w1_dir.x * x + w1_dir.y * z - w1_c * time * 0.45);
     const w1_a = 0.26 / w1_k;
 
     const w2_dir = new THREE.Vector2(0.4, 0.9).normalize();
     const w2_k = (2.0 * Math.PI) / 14.0;
     const w2_c = Math.sqrt(9.8 / w2_k);
-    const w2_f = w2_k * (w2_dir.x * x + w2_dir.y * z - w2_c * time * 0.42);
+    const w2_f = w2_k * (w2_dir.x * x + w2_dir.y * z - w2_c * time * 0.45);
     const w2_a = 0.20 / w2_k;
 
     const w3_dir = new THREE.Vector2(-0.5, 0.6).normalize();
     const w3_k = (2.0 * Math.PI) / 8.0;
     const w3_c = Math.sqrt(9.8 / w3_k);
-    const w3_f = w3_k * (w3_dir.x * x + w3_dir.y * z - w3_c * time * 0.42);
+    const w3_f = w3_k * (w3_dir.x * x + w3_dir.y * z - w3_c * time * 0.45);
     const w3_a = 0.14 / w3_k;
 
     return w1_a * Math.sin(w1_f) + w2_a * Math.sin(w2_f) + w3_a * Math.sin(w3_f);

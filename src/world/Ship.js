@@ -28,34 +28,34 @@ export class Ship {
   }
 
   createMaterials() {
-    // 1. Aged Teak / Dark Oak Hull
+    // 1. Teak / Oak Hull in Daylight
     this.hullMat = new THREE.MeshStandardMaterial({
-      color: 0x2c1d14,
-      roughness: 0.60,
-      metalness: 0.08
+      color: 0x3d271a,
+      roughness: 0.58,
+      metalness: 0.06
     });
 
     // 2. Dark Planking & Wales
     this.darkWoodMat = new THREE.MeshStandardMaterial({
-      color: 0x140c08,
-      roughness: 0.76,
+      color: 0x1a1109,
+      roughness: 0.72,
       metalness: 0.04
     });
 
     // 3. Deck Flooring Material
     this.deckMat = new THREE.MeshStandardMaterial({
-      color: 0x38261c,
-      roughness: 0.68,
+      color: 0x4a3224,
+      roughness: 0.65,
       metalness: 0.05
     });
 
     // 4. Polished Pirate Gold & Brass (Sunny Lion Mane, Cannons, Trim)
     this.goldMat = new THREE.MeshStandardMaterial({
       color: 0xf59e0b,
-      roughness: 0.24,
+      roughness: 0.22,
       metalness: 0.92,
-      emissive: 0x92400e,
-      emissiveIntensity: 0.22
+      emissive: 0x78350f,
+      emissiveIntensity: 0.12
     });
 
     // 5. Wrought Iron (Anchors, Chains, Hardware)
@@ -286,8 +286,8 @@ export class Ship {
       fragmentShader: `
         uniform float uTime;
         uniform sampler2D uSailMap;
-        uniform vec3 uMoonDirection;
-        uniform vec3 uMoonColor;
+        uniform vec3 uSunDirection;
+        uniform vec3 uSunColor;
         
         varying vec2 vUv;
         varying vec3 vNormal;
@@ -295,25 +295,25 @@ export class Ship {
 
         void main() {
           vec3 viewDir = normalize(cameraPosition - vWorldPosition);
-          vec3 lightDir = normalize(uMoonDirection);
+          vec3 lightDir = normalize(uSunDirection);
           vec3 n = normalize(vNormal);
 
-          // Subsurface transmission: moonlight penetrating through translucent fabric
-          float backlight = pow(max(dot(-viewDir, lightDir), 0.0), 2.2) * 0.95;
-          float frontlight = max(dot(n, lightDir), 0.0) * 0.65;
-          float ambientCloth = 0.38;
+          // Daylight translucency
+          float backlight = pow(max(dot(-viewDir, lightDir), 0.0), 2.2) * 0.7;
+          float frontlight = max(dot(n, lightDir), 0.0) * 0.75;
+          float ambientCloth = 0.52;
 
           vec4 texColor = texture2D(uSailMap, vUv);
 
-          vec3 finalIllumination = (ambientCloth + frontlight) * vec3(0.72, 0.82, 0.96) + backlight * uMoonColor * 1.5;
+          vec3 finalIllumination = (ambientCloth + frontlight) * vec3(0.96, 0.96, 0.94) + backlight * uSunColor * 1.1;
           gl_FragColor = vec4(texColor.rgb * finalIllumination, 1.0);
         }
       `,
       uniforms: {
         uTime: { value: 0 },
         uSailMap: { value: texture },
-        uMoonDirection: { value: new THREE.Vector3(25, 45, -35) },
-        uMoonColor: { value: new THREE.Color('#dbeafe') }
+        uSunDirection: { value: new THREE.Vector3(25, 55, -25) },
+        uSunColor: { value: new THREE.Color('#fffbeb') }
       },
       side: THREE.DoubleSide
     });

@@ -25,8 +25,9 @@ export class Renderer {
     this.instance.setClearColor('#04070e', 1);
 
     // Advanced Cinematic Tonemapping & Shadow Settings
+    this.instance.outputColorSpace = THREE.SRGBColorSpace;
     this.instance.toneMapping = THREE.ACESFilmicToneMapping;
-    this.instance.toneMappingExposure = 1.25;
+    this.instance.toneMappingExposure = 1.18;
 
     this.instance.shadowMap.enabled = true;
     this.instance.shadowMap.type = THREE.PCFSoftShadowMap;

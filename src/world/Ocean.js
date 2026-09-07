@@ -12,8 +12,7 @@ export class Ocean {
   }
 
   setGeometry() {
-    // High-resolution plane for Gerstner wave displacement
-    this.geometry = new THREE.PlaneGeometry(160, 160, 160, 160);
+    this.geometry = new THREE.PlaneGeometry(180, 180, 180, 180);
     this.geometry.rotateX(-Math.PI / 2);
   }
 
@@ -21,22 +20,21 @@ export class Ocean {
     this.material = new THREE.ShaderMaterial({
       vertexShader: `
         uniform float uTime;
-        uniform vec2 uWaveA; // amplitude, wavelength
-        uniform vec2 uWaveB;
-        uniform vec2 uWaveC;
         
         varying vec3 vWorldPosition;
         varying vec3 vNormal;
         varying float vWaveHeight;
+        varying float vSteepnessSum;
+        varying vec2 vUv;
 
-        // Gerstner Wave Formula
-        vec3 gerstnerWave(vec4 wave, vec3 p, inout vec3 tangent, inout vec3 binormal) {
+        // 4-Wave Gerstner Wave Formula with exact analytical derivatives
+        vec3 gerstnerWave(vec4 wave, vec3 p, inout vec3 tangent, inout vec3 binormal, inout float steepnessAcc) {
           float steepness = wave.z;
           float wavelength = wave.w;
           float k = 2.0 * 3.14159265 / wavelength;
           float c = sqrt(9.8 / k);
           vec2 d = normalize(wave.xy);
-          float f = k * (dot(d, p.xz) - c * uTime * 0.45);
+          float f = k * (dot(d, p.xz) - c * uTime * 0.42);
           float a = steepness / k;
 
           tangent += vec3(
@@ -50,6 +48,8 @@ export class Ocean {
             -d.y * d.y * (steepness * sin(f))
           );
 
+          steepnessAcc += (sin(f) * 0.5 + 0.5) * steepness;
+
           return vec3(
             d.x * (a * cos(f)),
             a * sin(f),
@@ -58,23 +58,28 @@ export class Ocean {
         }
 
         void main() {
+          vUv = uv;
           vec3 p = position;
           vec3 tangent = vec3(1.0, 0.0, 0.0);
           vec3 binormal = vec3(0.0, 0.0, 1.0);
+          float steepnessAcc = 0.0;
 
-          // 3 combined directional waves
-          vec4 w1 = vec4(1.0, 0.4, 0.28, 18.0);
-          vec4 w2 = vec4(0.5, 0.8, 0.20, 10.0);
-          vec4 w3 = vec4(-0.4, 0.7, 0.15, 6.0);
+          // 4 realistic oceanic swell waves
+          vec4 w1 = vec4(1.0, 0.35, 0.26, 24.0);
+          vec4 w2 = vec4(0.4, 0.9,  0.20, 14.0);
+          vec4 w3 = vec4(-0.5, 0.6, 0.14, 8.0);
+          vec4 w4 = vec4(-0.8, -0.3, 0.08, 4.5);
 
           vec3 pFinal = p;
-          pFinal += gerstnerWave(w1, p, tangent, binormal);
-          pFinal += gerstnerWave(w2, p, tangent, binormal);
-          pFinal += gerstnerWave(w3, p, tangent, binormal);
+          pFinal += gerstnerWave(w1, p, tangent, binormal, steepnessAcc);
+          pFinal += gerstnerWave(w2, p, tangent, binormal, steepnessAcc);
+          pFinal += gerstnerWave(w3, p, tangent, binormal, steepnessAcc);
+          pFinal += gerstnerWave(w4, p, tangent, binormal, steepnessAcc);
 
           vec3 calculatedNormal = normalize(cross(binormal, tangent));
           vNormal = calculatedNormal;
           vWaveHeight = pFinal.y;
+          vSteepnessSum = steepnessAcc;
 
           vec4 worldPos = modelMatrix * vec4(pFinal, 1.0);
           vWorldPosition = worldPos.xyz;
@@ -83,58 +88,112 @@ export class Ocean {
         }
       `,
       fragmentShader: `
+        uniform float uTime;
         uniform vec3 uDepthColor;
+        uniform vec3 uMidColor;
         uniform vec3 uSurfaceColor;
         uniform vec3 uFoamColor;
+        uniform vec3 uSubsurfaceColor;
         uniform vec3 uMoonDirection;
         uniform vec3 uMoonColor;
         uniform vec3 uFogColor;
-        uniform float uFogDensity;
 
         varying vec3 vWorldPosition;
         varying vec3 vNormal;
         varying float vWaveHeight;
+        varying float vSteepnessSum;
+        varying vec2 vUv;
+
+        float hash(vec2 p) {
+          return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
+        }
+
+        float noise(vec2 p) {
+          vec2 i = floor(p);
+          vec2 f = fract(p);
+          vec2 u = f * f * (3.0 - 2.0 * f);
+          return mix(
+            mix(hash(i + vec2(0.0, 0.0)), hash(i + vec2(1.0, 0.0)), u.x),
+            mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x),
+            u.y
+          );
+        }
+
+        float fbm(vec2 p) {
+          float v = 0.0;
+          float a = 0.5;
+          for (int i = 0; i < 3; i++) {
+            v += a * noise(p);
+            p *= 2.1;
+            a *= 0.5;
+          }
+          return v;
+        }
 
         void main() {
-          vec3 normal = normalize(vNormal);
           vec3 viewDir = normalize(cameraPosition - vWorldPosition);
-
-          // Fresnel Effect
-          float fresnel = pow(1.0 - max(dot(viewDir, normal), 0.0), 4.0);
-
-          // Water Depth Gradient
-          float depthFactor = smoothstep(-1.2, 1.8, vWaveHeight);
-          vec3 waterColor = mix(uDepthColor, uSurfaceColor, depthFactor);
-
-          // Specular Moonlight Reflection
           vec3 lightDir = normalize(uMoonDirection);
+
+          // Fine micro-ripples perturbing the surface normal
+          vec2 rippleCoord = vWorldPosition.xz * 0.5 + vec2(uTime * 0.07, uTime * 0.04);
+          float n1 = fbm(rippleCoord);
+          float n2 = fbm(rippleCoord * 2.2 - vec2(uTime * 0.05));
+          vec3 perturbedNormal = normalize(vNormal + vec3((n1 - 0.5) * 0.14, 0.0, (n2 - 0.5) * 0.14));
+
+          // Physical Schlick Fresnel
+          float nDotV = max(dot(viewDir, perturbedNormal), 0.0);
+          float f0 = 0.022;
+          float fresnel = f0 + (1.0 - f0) * pow(1.0 - nDotV, 5.0);
+
+          // Deep Water Depth Grading
+          vec3 waterBody = mix(uDepthColor, uMidColor, smoothstep(-1.8, 0.2, vWaveHeight));
+          waterBody = mix(waterBody, uSurfaceColor, smoothstep(0.1, 1.5, vWaveHeight));
+
+          // Subsurface Scattering (SSS) through wave crests
+          float sssFactor = max(0.0, dot(viewDir, -lightDir)) * smoothstep(0.4, 1.7, vWaveHeight);
+          vec3 sssColor = uSubsurfaceColor * (sssFactor * 0.7);
+
+          // Anisotropic Moon Specular Highlight
           vec3 halfVector = normalize(lightDir + viewDir);
-          float specular = pow(max(dot(normal, halfVector), 0.0), 64.0) * 1.5;
+          float nDotH = max(dot(perturbedNormal, halfVector), 0.0);
+          float moonSpecularSharp = pow(nDotH, 140.0) * 2.8;
+          float moonSpecularBroad = pow(nDotH, 18.0) * 0.25;
+          vec3 specularHighlight = (moonSpecularSharp + moonSpecularBroad) * uMoonColor;
 
-          // Bioluminescent Foam Crests on high wave peaks
-          float foamFactor = smoothstep(0.7, 1.4, vWaveHeight);
-          waterColor = mix(waterColor, uFoamColor, foamFactor * 0.75);
+          // Sky Reflection
+          vec3 skyReflection = mix(vec3(0.015, 0.04, 0.09), vec3(0.08, 0.22, 0.42), pow(1.0 - nDotV, 2.2));
 
-          // Combine with Moonlight & Fresnel Sky Reflection
-          vec3 finalColor = waterColor + specular * uMoonColor * 1.2 + fresnel * vec3(0.08, 0.22, 0.45);
+          // Composite Base Ocean
+          vec3 baseColor = mix(waterBody + sssColor, skyReflection, fresnel * 0.75) + specularHighlight;
 
-          // Atmospheric Exponential Height / Distance Fog
+          // Delicate Organic Lace Seafoam on high peaks
+          float crestMask = smoothstep(0.95, 1.7, vWaveHeight + vSteepnessSum * 0.35);
+          float foamNoise = fbm(vWorldPosition.xz * 3.8 + vec2(uTime * 0.15));
+          float foamPattern = smoothstep(0.50, 0.75, foamNoise) * crestMask;
+
+          vec3 colorWithFoam = mix(baseColor, uFoamColor, foamPattern * 0.72);
+
+          // Atmospheric Distance & Height Fog
           float dist = length(cameraPosition - vWorldPosition);
-          float fogFactor = 1.0 - exp(-dist * dist * 0.000085);
-          finalColor = mix(finalColor, uFogColor, clamp(fogFactor, 0.0, 1.0));
+          float distanceFog = 1.0 - exp(-dist * dist * 0.000075);
+          float heightFog = exp(-vWorldPosition.y * 0.25) * 0.25;
+          float totalFog = clamp(distanceFog + heightFog, 0.0, 1.0);
+
+          vec3 finalColor = mix(colorWithFoam, uFogColor, totalFog);
 
           gl_FragColor = vec4(finalColor, 1.0);
         }
       `,
       uniforms: {
         uTime: { value: 0 },
-        uDepthColor: { value: new THREE.Color('#030814') },
-        uSurfaceColor: { value: new THREE.Color('#0a203d') },
-        uFoamColor: { value: new THREE.Color('#38bdf8') },
-        uMoonDirection: { value: new THREE.Vector3(10, 25, -20) },
+        uDepthColor: { value: new THREE.Color('#010308') },       // Deep ocean abyss
+        uMidColor: { value: new THREE.Color('#031120') },         // Midnight ocean blue
+        uSurfaceColor: { value: new THREE.Color('#082b40') },     // Luminous deep teal
+        uSubsurfaceColor: { value: new THREE.Color('#0d9488') },  // Emerald cyan SSS
+        uFoamColor: { value: new THREE.Color('#cbd5e1') },        // Silvery nocturnal foam
+        uMoonDirection: { value: new THREE.Vector3(25, 45, -35) },
         uMoonColor: { value: new THREE.Color('#e0f2fe') },
-        uFogColor: { value: new THREE.Color('#04070e') },
-        uFogDensity: { value: 0.012 }
+        uFogColor: { value: new THREE.Color('#020610') }
       },
       wireframe: false,
       transparent: false
@@ -148,21 +207,26 @@ export class Ocean {
     this.scene.add(this.mesh);
   }
 
-  // Exact math to compute wave height at any (x, z) coordinate for ship buoyancy
   getWaveHeight(x, z, time) {
-    const w1_dir = new THREE.Vector2(1.0, 0.4).normalize();
-    const w1_k = (2.0 * Math.PI) / 18.0;
+    const w1_dir = new THREE.Vector2(1.0, 0.35).normalize();
+    const w1_k = (2.0 * Math.PI) / 24.0;
     const w1_c = Math.sqrt(9.8 / w1_k);
-    const w1_f = w1_k * (w1_dir.x * x + w1_dir.y * z - w1_c * time * 0.45);
-    const w1_a = 0.28 / w1_k;
+    const w1_f = w1_k * (w1_dir.x * x + w1_dir.y * z - w1_c * time * 0.42);
+    const w1_a = 0.26 / w1_k;
 
-    const w2_dir = new THREE.Vector2(0.5, 0.8).normalize();
-    const w2_k = (2.0 * Math.PI) / 10.0;
+    const w2_dir = new THREE.Vector2(0.4, 0.9).normalize();
+    const w2_k = (2.0 * Math.PI) / 14.0;
     const w2_c = Math.sqrt(9.8 / w2_k);
-    const w2_f = w2_k * (w2_dir.x * x + w2_dir.y * z - w2_c * time * 0.45);
+    const w2_f = w2_k * (w2_dir.x * x + w2_dir.y * z - w2_c * time * 0.42);
     const w2_a = 0.20 / w2_k;
 
-    return w1_a * Math.sin(w1_f) + w2_a * Math.sin(w2_f);
+    const w3_dir = new THREE.Vector2(-0.5, 0.6).normalize();
+    const w3_k = (2.0 * Math.PI) / 8.0;
+    const w3_c = Math.sqrt(9.8 / w3_k);
+    const w3_f = w3_k * (w3_dir.x * x + w3_dir.y * z - w3_c * time * 0.42);
+    const w3_a = 0.14 / w3_k;
+
+    return w1_a * Math.sin(w1_f) + w2_a * Math.sin(w2_f) + w3_a * Math.sin(w3_f);
   }
 
   update(delta) {

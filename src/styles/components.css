@@ -385,7 +385,7 @@
 
 .hero-content {
   pointer-events: auto;
-  max-width: min(580px, 44vw);
+  max-width: min(500px, 38vw);
   margin: auto 0;
   display: flex;
   flex-direction: column;
@@ -398,7 +398,7 @@
   align-items: center;
   gap: 0.75rem;
   font-family: var(--font-mono);
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   letter-spacing: 0.25em;
   text-transform: uppercase;
   color: var(--gold-dark);
@@ -412,22 +412,22 @@
 
 .hero-title {
   font-family: var(--font-display);
-  font-size: clamp(2.2rem, 4.0vw, 3.8rem);
+  font-size: clamp(2.0rem, 3.4vw, 3.4rem);
   font-weight: 900;
   line-height: 1.05;
   letter-spacing: 0.02em;
   text-transform: uppercase;
   color: var(--text-primary);
   text-shadow: 0 4px 20px rgba(15, 23, 42, 0.1);
-  max-width: 520px;
+  max-width: 460px;
 }
 
 .hero-tagline {
-  font-size: clamp(1.0rem, 1.4vw, 1.2rem);
+  font-size: clamp(0.95rem, 1.25vw, 1.15rem);
   font-weight: 400;
   line-height: 1.65;
   color: #1e293b;
-  max-width: 520px;
+  max-width: 480px;
   background: rgba(255, 255, 255, 0.82);
   backdrop-filter: blur(14px);
   padding: 1.1rem 1.4rem;

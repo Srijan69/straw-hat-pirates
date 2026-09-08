@@ -7,9 +7,9 @@ export class Camera {
     this.sizes = experience.sizes;
     this.scene = experience.scene;
 
-    // Base cinematic editorial staging
-    this.baseTargetPosition = new THREE.Vector3(-1.8, 3.6, 17.8);
-    this.baseTargetLookAt = new THREE.Vector3(0.6, 2.3, 0.4);
+    // Base cinematic editorial staging: frames Thousand Sunny proudly in golden ratio on the right
+    this.baseTargetPosition = new THREE.Vector3(0.0, 4.4, 19.5);
+    this.baseTargetLookAt = new THREE.Vector3(3.8, 2.6, 0.2);
 
     // Scroll-driven offsets (driven by GSAP ScrollTrigger)
     this.scrollTargetPosition = new THREE.Vector3(0, 0, 0);
@@ -17,9 +17,9 @@ export class Camera {
     this.scrollFovOffset = 0;
 
     // Combined target vectors
-    this.targetPosition = new THREE.Vector3(-1.8, 3.6, 17.8);
-    this.targetLookAt = new THREE.Vector3(0.6, 2.3, 0.4);
-    this.currentLookAt = new THREE.Vector3(0.6, 2.3, 0.4);
+    this.targetPosition = new THREE.Vector3(0.0, 4.4, 19.5);
+    this.targetLookAt = new THREE.Vector3(3.8, 2.6, 0.2);
+    this.currentLookAt = new THREE.Vector3(3.8, 2.6, 0.2);
 
     this.updateBaseTargetForScreen();
     this.currentLookAt.copy(this.targetLookAt);
@@ -28,7 +28,7 @@ export class Camera {
     this.mouse = { x: 0, y: 0 };
     this.parallax = { x: 0, y: 0 };
 
-    this.baseFov = 36;
+    this.baseFov = 35;
     this.setInstance();
     this.initMouseEvents();
   }
@@ -37,16 +37,16 @@ export class Camera {
     const aspect = this.sizes.width / this.sizes.height;
     if (aspect < 1.0) {
       // Portrait / Mobile view: pull camera back and center slightly
-      this.baseTargetPosition.set(0.0, 4.0, 22.0);
-      this.baseTargetLookAt.set(1.2, 2.2, 0.4);
+      this.baseTargetPosition.set(0.0, 4.5, 23.0);
+      this.baseTargetLookAt.set(1.2, 2.2, 0.0);
     } else if (aspect < 1.4) {
       // Tablet / Square view
-      this.baseTargetPosition.set(-0.6, 3.8, 19.5);
-      this.baseTargetLookAt.set(1.0, 2.3, 0.4);
+      this.baseTargetPosition.set(0.0, 4.2, 20.5);
+      this.baseTargetLookAt.set(2.4, 2.4, 0.2);
     } else {
-      // Desktop widescreen: cinematic golden-ratio staging framing the ship on the right
-      this.baseTargetPosition.set(-1.8, 3.6, 17.8);
-      this.baseTargetLookAt.set(0.6, 2.3, 0.4);
+      // Desktop widescreen: cinematic golden-ratio staging framing the Thousand Sunny on the right
+      this.baseTargetPosition.set(0.0, 4.4, 19.5);
+      this.baseTargetLookAt.set(3.8, 2.6, 0.2);
     }
   }
 

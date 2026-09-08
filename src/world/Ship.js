@@ -12,13 +12,13 @@ export class Ship {
     this.sails = [];
     this.time = 0;
 
-    // Staging parameters - Dynamic 3/4 bow composition
-    this.baseX = 6.8;
-    this.baseZ = 1.0;
-    this.baseRotationY = 0.68; // ~39 degrees: golden lion prow, billowing sails and port flank
+    // Staging parameters - Majestic frontal 3/4 heroic composition: Sunny lion prow faces viewer proudly
+    this.baseX = 8.6;
+    this.baseZ = 0.0;
+    this.baseRotationY = 0.28; // ~16 degrees: lion figurehead and Jolly Roger sail face camera heroically
 
     // Deep natural water draft immersion
-    this.draftOffset = -0.85; // Keel sits deep into waves so bottom is never unnaturally exposed
+    this.draftOffset = -0.78; // Hull sits naturally immersed with sheer stripe and lion prow gleaming above water
     this.targetY = this.draftOffset;
     this.targetPitch = 0;
     this.targetRoll = 0;

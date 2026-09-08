@@ -13,7 +13,7 @@ export class Ship {
     this.time = 0;
 
     // Staging parameters - Dynamic 3/4 bow composition: ship cuts forward towards right foreground
-    this.baseX = 6.0;
+    this.baseX = 6.8;
     this.baseZ = 1.0;
     this.baseRotationY = 0.68; // ~39 degrees: powerful dynamic 3/4 angle showing golden lion prow, billowing sails and port flank
 
@@ -115,6 +115,26 @@ export class Ship {
       metalness: 0.1,
       transparent: true,
       opacity: 0.58
+    });
+
+    this.windowMat = new THREE.MeshStandardMaterial({
+      color: 0x123047,
+      roughness: 0.18,
+      metalness: 0.45,
+      emissive: 0x0b2438,
+      emissiveIntensity: 0.32
+    });
+
+    this.paintRedMat = new THREE.MeshStandardMaterial({
+      color: 0xb91c1c,
+      roughness: 0.42,
+      metalness: 0.12
+    });
+
+    this.creamMat = new THREE.MeshStandardMaterial({
+      color: 0xfff7ed,
+      roughness: 0.78,
+      metalness: 0.02
     });
   }
 
@@ -523,6 +543,8 @@ export class Ship {
     railMesh.position.y = 2.26;
     this.group.add(railMesh);
 
+    this.createHullDetail();
+
     // ----------------------------------------------------
     // 2. Main Deck Planking & Deck Furniture
     // ----------------------------------------------------
@@ -591,6 +613,8 @@ export class Ship {
     sternBalustrade.position.set(0, 4.38, -4.7);
     this.group.add(sternBalustrade);
 
+    this.createSternDetail();
+
     // ----------------------------------------------------
     // 5. Quarterdeck Helm (Ship's Wheel)
     // ----------------------------------------------------
@@ -625,6 +649,22 @@ export class Ship {
     const noseMesh = new THREE.Mesh(noseGeo, this.crimsonWoodMat);
     noseMesh.position.set(0, 0.04, 0.62);
     figureheadGroup.add(noseMesh);
+
+    // Layered muzzle plates and cheek whiskers give the Sunny figurehead a readable silhouette.
+    const muzzlePlateGeo = new THREE.TorusGeometry(0.22, 0.035, 8, 18);
+    const muzzlePlate = new THREE.Mesh(muzzlePlateGeo, this.goldMat);
+    muzzlePlate.position.set(0, -0.10, 0.61);
+    muzzlePlate.rotation.x = Math.PI / 2;
+    figureheadGroup.add(muzzlePlate);
+
+    [-1, 1].forEach((side) => {
+      const whiskerGeo = new THREE.CylinderGeometry(0.018, 0.018, 0.52, 6);
+      const whisker = new THREE.Mesh(whiskerGeo, this.goldMat);
+      whisker.position.set(side * 0.34, -0.02, 0.5);
+      whisker.rotation.z = side * 0.24;
+      whisker.rotation.x = Math.PI / 2;
+      figureheadGroup.add(whisker);
+    });
 
     // Stylized Dark Eyes for Lion Face
     [-0.22, 0.22].forEach((eyeX) => {
@@ -664,6 +704,11 @@ export class Ship {
       petalMesh.rotation.x = Math.PI / 2;
       figureheadGroup.add(petalMesh);
     }
+
+    const maneRingGeo = new THREE.TorusGeometry(0.78, 0.07, 10, 28);
+    const maneRing = new THREE.Mesh(maneRingGeo, this.goldMat);
+    maneRing.position.z = -0.13;
+    figureheadGroup.add(maneRing);
 
     // Bowsprit Extending Forward & Gently Upward
     // Aligned directly along ship's prow (Z-axis) at 18 degrees upward rake
@@ -730,6 +775,109 @@ export class Ship {
     this.group.scale.set(0.85, 0.85, 0.85);
     this.group.position.set(this.baseX, this.draftOffset, this.baseZ);
     this.group.rotation.y = this.baseRotationY;
+  }
+
+  createHullDetail() {
+    // Gold sheer stripe follows the visible port/starboard profile and makes the Sunny read at a glance.
+    const stripeGeo = new THREE.BoxGeometry(3.30, 0.11, 9.25, 2, 1, 12);
+    const stripe = new THREE.Mesh(stripeGeo, this.goldMat);
+    stripe.position.y = 1.42;
+    stripe.castShadow = true;
+    this.group.add(stripe);
+
+    // Repeated framed portholes add scale and break up the broad hull side.
+    const portholeRingGeo = new THREE.TorusGeometry(0.16, 0.035, 8, 16);
+    const portholeGeo = new THREE.CircleGeometry(0.12, 16);
+    [-1, 1].forEach((side) => {
+      [-2.9, -1.7, -0.5, 0.7, 1.9, 3.0].forEach((z, index) => {
+        const ring = new THREE.Mesh(portholeRingGeo, this.goldMat);
+        ring.position.set(side * 1.57, 1.58 + (index % 2) * 0.03, z);
+        ring.rotation.y = side * Math.PI / 2;
+        this.group.add(ring);
+
+        const glass = new THREE.Mesh(portholeGeo, this.windowMat);
+        glass.position.set(side * 1.575, 1.58 + (index % 2) * 0.03, z);
+        glass.rotation.y = side * Math.PI / 2;
+        this.group.add(glass);
+      });
+    });
+
+    // Short vertical ribs suggest real framing without adding a heavy high-poly hull.
+    [-3.8, -2.6, -1.4, -0.2, 1.0, 2.2, 3.4].forEach((z) => {
+      [-1, 1].forEach((side) => {
+        const ribGeo = new THREE.BoxGeometry(0.08, 0.92, 0.16);
+        const rib = new THREE.Mesh(ribGeo, this.darkWoodMat);
+        rib.position.set(side * 1.57, 1.18, z);
+        rib.rotation.x = z > 0 ? -0.08 : 0.05;
+        this.group.add(rib);
+      });
+    });
+
+    // Red sunburst panels are a signature Sunny accent beneath the gunwale.
+    [-1, 1].forEach((side) => {
+      const panelGeo = new THREE.BoxGeometry(0.08, 0.34, 1.4);
+      const panel = new THREE.Mesh(panelGeo, this.paintRedMat);
+      panel.position.set(side * 1.62, 1.88, 3.72);
+      panel.rotation.z = side * 0.18;
+      this.group.add(panel);
+    });
+
+    // Raised cleats and mooring bollards make the forecastle feel functional.
+    [-0.85, 0.85].forEach((x) => {
+      const bollardGeo = new THREE.CylinderGeometry(0.10, 0.13, 0.42, 10);
+      const bollard = new THREE.Mesh(bollardGeo, this.goldMat);
+      bollard.position.set(x, 2.78, 3.72);
+      this.group.add(bollard);
+      const capGeo = new THREE.CylinderGeometry(0.15, 0.15, 0.06, 10);
+      const cap = new THREE.Mesh(capGeo, this.goldMat);
+      cap.position.set(x, 2.98, 3.72);
+      this.group.add(cap);
+    });
+  }
+
+  createSternDetail() {
+    // Framed stern windows with warm cabin light.
+    [-0.78, 0, 0.78].forEach((x) => {
+      const frameGeo = new THREE.BoxGeometry(0.48, 0.62, 0.08);
+      const frame = new THREE.Mesh(frameGeo, this.goldMat);
+      frame.position.set(x, 3.28, -4.77);
+      this.group.add(frame);
+
+      const paneGeo = new THREE.PlaneGeometry(0.34, 0.46);
+      const pane = new THREE.Mesh(paneGeo, this.windowMat);
+      pane.position.set(x, 3.28, -4.82);
+      pane.rotation.y = Math.PI;
+      this.group.add(pane);
+    });
+
+    // Two small stern balconies make the rear silhouette less box-like.
+    [-1, 1].forEach((side) => {
+      const balconyGeo = new THREE.BoxGeometry(0.72, 0.10, 0.58);
+      const balcony = new THREE.Mesh(balconyGeo, this.deckMat);
+      balcony.position.set(side * 0.94, 4.18, -4.56);
+      this.group.add(balcony);
+
+      [0.72, 1.16].forEach((x) => {
+        const postGeo = new THREE.CylinderGeometry(0.025, 0.025, 0.34, 6);
+        const post = new THREE.Mesh(postGeo, this.goldMat);
+        post.position.set(side * x, 4.38, -4.56);
+        this.group.add(post);
+      });
+    });
+
+    // Stern flag staff and a compact red pennant.
+    const staffGeo = new THREE.CylinderGeometry(0.035, 0.05, 1.15, 8);
+    const staff = new THREE.Mesh(staffGeo, this.darkWoodMat);
+    staff.position.set(0, 5.03, -4.42);
+    this.group.add(staff);
+    const pennantGeo = new THREE.PlaneGeometry(0.72, 0.34);
+    const pennant = new THREE.Mesh(pennantGeo, new THREE.MeshStandardMaterial({
+      color: 0xdc2626,
+      roughness: 0.55,
+      side: THREE.DoubleSide
+    }));
+    pennant.position.set(0.36, 5.42, -4.42);
+    this.group.add(pennant);
   }
 
   createJibSail(x1, y1, z1, x2, y2, z2, x3, y3, z3) {

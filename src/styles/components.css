@@ -385,7 +385,7 @@
 
 .hero-content {
   pointer-events: auto;
-  max-width: min(720px, 48vw);
+  max-width: min(580px, 44vw);
   margin: auto 0;
   display: flex;
   flex-direction: column;
@@ -412,14 +412,14 @@
 
 .hero-title {
   font-family: var(--font-display);
-  font-size: clamp(2.4rem, 4.5vw, 4.2rem);
+  font-size: clamp(2.2rem, 4.0vw, 3.8rem);
   font-weight: 900;
   line-height: 1.05;
   letter-spacing: 0.02em;
   text-transform: uppercase;
   color: var(--text-primary);
   text-shadow: 0 4px 20px rgba(15, 23, 42, 0.1);
-  max-width: 580px;
+  max-width: 520px;
 }
 
 .hero-tagline {

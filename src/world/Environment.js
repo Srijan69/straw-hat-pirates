@@ -6,6 +6,7 @@ export class Environment {
     this.experience = experience;
     this.scene = experience.scene;
     this.time = 0;
+    this.goldenHourFactor = 0;
 
     this.setFog();
     this.setLights();
@@ -158,8 +159,8 @@ export class Environment {
           float vertFade = smoothstep(0.0, 0.15, vUv.y) * smoothstep(1.0, 0.4, vUv.y);
           float radialGlow = pow(max(dot(vNormal, vec3(0.0, 0.0, 1.0)), 0.0), 1.5);
           float beamPulsate = 0.88 + 0.12 * sin(uTime * 0.6 + vUv.y * 5.0);
-          float alpha = vertFade * (0.05 + radialGlow * 0.09) * beamPulsate;
-          vec3 rayColor = vec3(1.0, 0.95, 0.82); // Golden sun rays
+          float alpha = vertFade * (0.06 + radialGlow * 0.10) * beamPulsate;
+          vec3 rayColor = vec3(1.0, 0.94, 0.78); // Warm radiant sun rays
           gl_FragColor = vec4(rayColor, alpha);
         }
       `,
@@ -203,18 +204,13 @@ export class Environment {
         varying vec3 vNormal;
 
         void main() {
-          // Lush tropical mountain rock (green canopy & slate volcanic stone)
           vec3 rockColor = mix(vec3(0.12, 0.28, 0.22), vec3(0.24, 0.32, 0.38), smoothstep(0.0, 25.0, vWorldPosition.y));
-
-          // Soft sunlight rim
           float rim = pow(1.0 - max(dot(normalize(-vWorldPosition), vNormal), 0.0), 2.5);
           rockColor += vec3(0.3, 0.25, 0.15) * rim;
 
-          // Atmospheric sea mist at water line
           float mist = smoothstep(10.0, 0.0, vWorldPosition.y) * 0.55;
           rockColor = mix(rockColor, uFogColor, mist);
 
-          // Distance fog
           float dist = length(vWorldPosition);
           float fogFactor = 1.0 - exp(-dist * dist * 0.00005);
           vec3 finalColor = mix(rockColor, uFogColor, clamp(fogFactor, 0.0, 1.0));
@@ -245,6 +241,36 @@ export class Environment {
     });
 
     this.scene.add(islandGroup);
+  }
+
+  setGoldenHour(factor) {
+    this.goldenHourFactor = factor;
+    // Ambient light: from azure '#bae6fd' to warm sunset '#fdba74'
+    this.ambientLight.color.lerpColors(
+      new THREE.Color('#bae6fd'),
+      new THREE.Color('#fdba74'),
+      factor
+    );
+    // Sun key light: from '#fff7ed' to warm radiant amber '#f59e0b'
+    this.sunLight.color.lerpColors(
+      new THREE.Color('#fff7ed'),
+      new THREE.Color('#f59e0b'),
+      factor
+    );
+    // Ship fill light: from '#fffbeb' to sunset gold '#fcd34d'
+    this.shipFillLight.color.lerpColors(
+      new THREE.Color('#fffbeb'),
+      new THREE.Color('#fcd34d'),
+      factor
+    );
+    // Fog color: from '#e0f2fe' to golden sunset mist '#fef3c7'
+    if (this.scene.fog) {
+      this.scene.fog.color.lerpColors(
+        new THREE.Color('#e0f2fe'),
+        new THREE.Color('#fef3c7'),
+        factor
+      );
+    }
   }
 
   update(delta) {

@@ -1,4 +1,7 @@
 import * as THREE from 'three';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 
 export class Renderer {
   constructor(experience) {
@@ -9,6 +12,7 @@ export class Renderer {
     this.camera = experience.camera;
 
     this.setInstance();
+    this.setPostProcessing();
   }
 
   setInstance() {
@@ -33,12 +37,30 @@ export class Renderer {
     this.instance.shadowMap.type = THREE.PCFSoftShadowMap;
   }
 
+  setPostProcessing() {
+    this.composer = new EffectComposer(this.instance);
+    this.renderPass = new RenderPass(this.scene, this.camera.instance);
+    this.composer.addPass(this.renderPass);
+
+    // Subtle, elegant bloom targeted at light sources (lantern cores, sun corona, metallic glints)
+    const bloomResolution = new THREE.Vector2(this.sizes.width, this.sizes.height);
+    this.bloomPass = new UnrealBloomPass(bloomResolution, 0.24, 0.40, 0.94);
+    this.composer.addPass(this.bloomPass);
+  }
+
   resize() {
     this.instance.setSize(this.sizes.width, this.sizes.height);
     this.instance.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    if (this.composer) {
+      this.composer.setSize(this.sizes.width, this.sizes.height);
+    }
   }
 
   update() {
-    this.instance.render(this.scene, this.camera.instance);
+    if (this.composer) {
+      this.composer.render();
+    } else {
+      this.instance.render(this.scene, this.camera.instance);
+    }
   }
 }

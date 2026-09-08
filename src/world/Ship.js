@@ -12,10 +12,10 @@ export class Ship {
     this.sails = [];
     this.time = 0;
 
-    // Staging parameters - Dynamic 3/4 bow composition: ship cuts forward towards right foreground
+    // Staging parameters - Dynamic 3/4 bow composition
     this.baseX = 6.8;
     this.baseZ = 1.0;
-    this.baseRotationY = 0.68; // ~39 degrees: powerful dynamic 3/4 angle showing golden lion prow, billowing sails and port flank
+    this.baseRotationY = 0.68; // ~39 degrees: golden lion prow, billowing sails and port flank
 
     // Deep natural water draft immersion
     this.draftOffset = -0.85; // Keel sits deep into waves so bottom is never unnaturally exposed
@@ -23,21 +23,34 @@ export class Ship {
     this.targetPitch = 0;
     this.targetRoll = 0;
 
+    // Scroll-driven dynamic response parameters
+    this.scrollOffset = {
+      x: 0,
+      y: 0,
+      z: 0,
+      rotationY: 0,
+      roll: 0,
+      pitch: 0,
+      sailFlutter: 1.0
+    };
+
     this.createMaterials();
     this.buildShipModel();
     this.scene.add(this.group);
   }
 
   createMaterials() {
-    // 1. High-Detail Procedural Wood Textures
+    // 1. High-Detail Procedural Wood & Lawn Textures
     this.woodPlankTexture = this.createWoodPlankTexture();
     this.deckPlankTexture = this.createDeckPlankTexture();
+    this.lawnTexture = this.createLawnTexture();
+    this.stonePaverTexture = this.createStonePaverTexture();
 
-    // Hull Upper Material (Rich Varnished Teak with plank grooves)
+    // Hull Upper Material (Rich Varnished Sunny Teak)
     this.hullMat = new THREE.MeshStandardMaterial({
       map: this.woodPlankTexture,
-      roughness: 0.48,
-      metalness: 0.06
+      roughness: 0.46,
+      metalness: 0.08
     });
 
     // Hull Lower Waterline Material (Submerged Naval Anti-Fouling Dark Copper)
@@ -61,23 +74,51 @@ export class Ship {
       metalness: 0.04
     });
 
-    // Polished Naval Gold & Brass (Sunny Lion Mane, Railings, Lantern Fittings)
+    // Thousand Sunny Lawn Turf Material (Lush Green Grass)
+    this.lawnMat = new THREE.MeshStandardMaterial({
+      map: this.lawnTexture,
+      roughness: 0.85,
+      metalness: 0.02
+    });
+
+    // Lawn Central Stone Path
+    this.stoneMat = new THREE.MeshStandardMaterial({
+      map: this.stonePaverTexture,
+      roughness: 0.75,
+      metalness: 0.05
+    });
+
+    // Polished Naval Gold & Brass (Sunny Lion Mane, Railings, Coup de Burst rim)
     this.goldMat = new THREE.MeshStandardMaterial({
       color: 0xf59e0b,
-      roughness: 0.24,
-      metalness: 0.90,
-      emissive: 0x78350f,
-      emissiveIntensity: 0.12
+      roughness: 0.22,
+      metalness: 0.92,
+      emissive: 0xb45309,
+      emissiveIntensity: 0.24
     });
 
-    // Weathered Red Oak for Gunport Lids & Accents
-    this.crimsonWoodMat = new THREE.MeshStandardMaterial({
-      color: 0x881337,
-      roughness: 0.55,
-      metalness: 0.08
+    // Thousand Sunny Signature Crimson Paint (Sunbursts, Soldier Dock & Trim)
+    this.paintRedMat = new THREE.MeshStandardMaterial({
+      color: 0xdc2626,
+      roughness: 0.40,
+      metalness: 0.15
     });
 
-    // Forged Naval Iron (Anchors, Chains, Cannon Barrels)
+    // Sunny Vibrant Orange Accent (Soldier Dock channel markings & mast collars)
+    this.sunnyOrangeMat = new THREE.MeshStandardMaterial({
+      color: 0xf97316,
+      roughness: 0.38,
+      metalness: 0.12
+    });
+
+    // Pure Ivory Bone Material for Crossbones behind head
+    this.boneMat = new THREE.MeshStandardMaterial({
+      color: 0xf8fafc,
+      roughness: 0.45,
+      metalness: 0.05
+    });
+
+    // Forged Naval Iron (Gaon Cannon barrel, Coup de Burst interior, Chains)
     this.ironMat = new THREE.MeshStandardMaterial({
       color: 0x1e242b,
       roughness: 0.38,
@@ -91,15 +132,26 @@ export class Ship {
       metalness: 0.02
     });
 
-    // Canvas Sails Textures
-    this.jollyRogerTexture = this.createJollyRogerTexture();
-    this.plainSailTexture = this.createPlainSailTexture();
+    // Glass & Aquarium Windows
+    this.windowMat = new THREE.MeshStandardMaterial({
+      color: 0x0284c7,
+      roughness: 0.12,
+      metalness: 0.6,
+      emissive: 0x0369a1,
+      emissiveIntensity: 0.45,
+      transparent: true,
+      opacity: 0.85
+    });
+
+    // Distinctive Thousand Sunny Canvas Sails Textures
+    this.jollyRogerTexture = this.createSunnyJollyRogerTexture();
+    this.plainSailTexture = this.createSunnyPlainSailTexture();
 
     // Translucent Backlit Canvas Sails Shaders
     this.jollyRogerSailMat = this.createSailShaderMaterial(this.jollyRogerTexture);
     this.plainSailMat = this.createSailShaderMaterial(this.plainSailTexture);
 
-    // Dedicated Wireframe Material for Lantern Cage (Keeps other gold meshes solid)
+    // Dedicated Wireframe Material for Lantern Cage
     this.lanternCageMat = new THREE.MeshStandardMaterial({
       color: 0xf59e0b,
       roughness: 0.3,
@@ -109,33 +161,6 @@ export class Ship {
 
     // Lantern Core & Warm Amber Glass
     this.lanternCoreMat = new THREE.MeshBasicMaterial({ color: 0xfffbeb });
-    this.glassMat = new THREE.MeshStandardMaterial({
-      color: 0xfef08a,
-      roughness: 0.12,
-      metalness: 0.1,
-      transparent: true,
-      opacity: 0.58
-    });
-
-    this.windowMat = new THREE.MeshStandardMaterial({
-      color: 0x123047,
-      roughness: 0.18,
-      metalness: 0.45,
-      emissive: 0x0b2438,
-      emissiveIntensity: 0.32
-    });
-
-    this.paintRedMat = new THREE.MeshStandardMaterial({
-      color: 0xb91c1c,
-      roughness: 0.42,
-      metalness: 0.12
-    });
-
-    this.creamMat = new THREE.MeshStandardMaterial({
-      color: 0xfff7ed,
-      roughness: 0.78,
-      metalness: 0.02
-    });
   }
 
   createWoodPlankTexture() {
@@ -144,45 +169,44 @@ export class Ship {
     canvas.height = 1024;
     const ctx = canvas.getContext('2d');
 
-    // Warm seasoned teak base
-    ctx.fillStyle = '#543622';
+    // Rich teak base
+    ctx.fillStyle = '#b46328';
     ctx.fillRect(0, 0, 1024, 1024);
 
-    // Horizontal plank lines & caulk seams
     const plankHeight = 32;
-    for (let y = 0; y < 1024; y += plankHeight) {
-      const shade = (Math.random() * 28 - 14);
-      ctx.fillStyle = `rgb(${78 + shade}, ${48 + shade * 0.8}, ${32 + shade * 0.6})`;
-      ctx.fillRect(0, y, 1024, plankHeight - 2);
+    const numPlanks = 1024 / plankHeight;
 
-      // Deep caulk groove
-      ctx.fillStyle = '#1c1009';
-      ctx.fillRect(0, y + plankHeight - 2, 1024, 2);
+    for (let i = 0; i < numPlanks; i++) {
+      const y = i * plankHeight;
+      const shade = (Math.random() - 0.5) * 22;
+      ctx.fillStyle = `rgb(${180 + shade}, ${99 + shade * 0.6}, ${40 + shade * 0.3})`;
+      ctx.fillRect(0, y, 1024, plankHeight);
 
-      // Staggered butt joints
-      const stagger = (y / plankHeight) % 3;
-      const jointX1 = (stagger * 340 + 120) % 1024;
-      const jointX2 = (jointX1 + 512) % 1024;
-      ctx.fillRect(jointX1, y, 2, plankHeight - 2);
-      ctx.fillRect(jointX2, y, 2, plankHeight - 2);
+      // Wood grain lines
+      ctx.strokeStyle = 'rgba(70, 32, 10, 0.22)';
+      ctx.lineWidth = 1;
+      for (let j = 0; j < 8; j++) {
+        ctx.beginPath();
+        const lineY = y + Math.random() * plankHeight;
+        ctx.moveTo(0, lineY);
+        ctx.bezierCurveTo(256, lineY + (Math.random() - 0.5) * 6, 768, lineY + (Math.random() - 0.5) * 6, 1024, lineY);
+        ctx.stroke();
+      }
+
+      // Plank seam grooves
+      ctx.strokeStyle = '#3b1d0c';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(1024, y);
+      ctx.stroke();
     }
 
-    // Realistic wood grain noise
-    for (let i = 0; i < 9500; i++) {
-      const x = Math.random() * 1024;
-      const y = Math.random() * 1024;
-      const length = 12 + Math.random() * 45;
-      ctx.fillStyle = Math.random() > 0.5 ? 'rgba(25, 14, 8, 0.22)' : 'rgba(110, 72, 48, 0.16)';
-      ctx.fillRect(x, y, length, 1.2);
-    }
-
-    const tex = new THREE.CanvasTexture(canvas);
-    tex.wrapS = THREE.RepeatWrapping;
-    tex.wrapT = THREE.RepeatWrapping;
-    tex.repeat.set(2, 2);
-    tex.colorSpace = THREE.SRGBColorSpace;
-    tex.needsUpdate = true;
-    return tex;
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(2, 2);
+    return texture;
   }
 
   createDeckPlankTexture() {
@@ -191,65 +215,118 @@ export class Ship {
     canvas.height = 1024;
     const ctx = canvas.getContext('2d');
 
-    // Sun-bleached golden oak deck base
-    ctx.fillStyle = '#6e4c33';
+    // Clean Scandinavian naval deck
+    ctx.fillStyle = '#d99b61';
     ctx.fillRect(0, 0, 1024, 1024);
 
     const plankWidth = 24;
-    for (let x = 0; x < 1024; x += plankWidth) {
-      const shade = Math.random() * 22 - 11;
-      ctx.fillStyle = `rgb(${106 + shade}, ${76 + shade * 0.85}, ${52 + shade * 0.7})`;
-      ctx.fillRect(x, 0, plankWidth - 2, 1024);
+    const numPlanks = 1024 / plankWidth;
 
-      // Pitch seam
-      ctx.fillStyle = '#1c1008';
-      ctx.fillRect(x + plankWidth - 2, 0, 2, 1024);
+    for (let i = 0; i < numPlanks; i++) {
+      const x = i * plankWidth;
+      const shade = (Math.random() - 0.5) * 16;
+      ctx.fillStyle = `rgb(${217 + shade}, ${155 + shade * 0.7}, ${97 + shade * 0.4})`;
+      ctx.fillRect(x, 0, plankWidth, 1024);
 
-      // Deck wood plugs / treenails
-      for (let y = 30; y < 1024; y += 128) {
-        ctx.beginPath();
-        ctx.arc(x + plankWidth / 2 - 1, y + (x % 3) * 20, 2.5, 0, Math.PI * 2);
-        ctx.fill();
+      ctx.strokeStyle = '#4a250e';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, 1024);
+      ctx.stroke();
+    }
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(1, 3);
+    return texture;
+  }
+
+  createLawnTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 512;
+    const ctx = canvas.getContext('2d');
+
+    // Vibrant Thousand Sunny grass green
+    ctx.fillStyle = '#4ade80';
+    ctx.fillRect(0, 0, 512, 512);
+
+    // Grass blade variation
+    for (let i = 0; i < 18000; i++) {
+      const x = Math.random() * 512;
+      const y = Math.random() * 512;
+      const shade = Math.random() * 40 - 20;
+      ctx.fillStyle = `rgba(${34 + shade * 0.4}, ${197 + shade}, ${94 + shade * 0.3}, 0.65)`;
+      ctx.fillRect(x, y, 2 + Math.random() * 2, 4 + Math.random() * 4);
+    }
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(3, 8);
+    return texture;
+  }
+
+  createStonePaverTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 256;
+    const ctx = canvas.getContext('2d');
+
+    ctx.fillStyle = '#e2e8f0';
+    ctx.fillRect(0, 0, 256, 256);
+
+    ctx.strokeStyle = '#94a3b8';
+    ctx.lineWidth = 4;
+    for (let y = 0; y < 256; y += 32) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(256, y);
+      ctx.stroke();
+      for (let x = 0; x < 256; x += 32) {
+        ctx.strokeRect(x, y, 32, 32);
       }
     }
 
-    for (let i = 0; i < 7500; i++) {
-      const x = Math.random() * 1024;
-      const y = Math.random() * 1024;
-      ctx.fillStyle = 'rgba(25, 15, 9, 0.16)';
-      ctx.fillRect(x, y, 1.5, 8 + Math.random() * 28);
-    }
-
-    const tex = new THREE.CanvasTexture(canvas);
-    tex.wrapS = THREE.RepeatWrapping;
-    tex.wrapT = THREE.RepeatWrapping;
-    tex.repeat.set(1.5, 3);
-    tex.colorSpace = THREE.SRGBColorSpace;
-    tex.needsUpdate = true;
-    return tex;
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(1, 6);
+    return texture;
   }
 
-  createJollyRogerTexture() {
+  createSunnyJollyRogerTexture() {
     const canvas = document.createElement('canvas');
     canvas.width = 1024;
     canvas.height = 1024;
     const ctx = canvas.getContext('2d');
 
-    // Warm ivory sail canvas
-    ctx.fillStyle = '#f8f4e8';
+    // 1. Warm ivory sail canvas
+    ctx.fillStyle = '#fefce8';
     ctx.fillRect(0, 0, 1024, 1024);
+
+    // 2. Thousand Sunny Distinctive Orange / Yellow Accent Stripes
+    ctx.fillStyle = 'rgba(249, 115, 22, 0.88)';
+    ctx.fillRect(0, 40, 1024, 85);
+    ctx.fillRect(0, 895, 1024, 90);
+
+    ctx.fillStyle = 'rgba(245, 158, 11, 0.85)';
+    ctx.fillRect(0, 130, 1024, 40);
+    ctx.fillRect(0, 850, 1024, 40);
 
     // Fine canvas fabric weave
     for (let i = 0; i < 9000; i++) {
       const x = Math.random() * 1024;
       const y = Math.random() * 1024;
       const shade = Math.random() * 24 - 12;
-      ctx.fillStyle = `rgba(${195 + shade}, ${185 + shade}, ${165 + shade}, 0.18)`;
+      ctx.fillStyle = `rgba(${210 + shade}, ${200 + shade}, ${180 + shade}, 0.16)`;
       ctx.fillRect(x, y, 2 + Math.random() * 3, 2 + Math.random() * 3);
     }
 
     // Vertical canvas cloth seams
-    ctx.strokeStyle = 'rgba(125, 105, 80, 0.28)';
+    ctx.strokeStyle = 'rgba(125, 105, 80, 0.25)';
     ctx.lineWidth = 3;
     ctx.setLineDash([16, 12]);
     for (let x = 170; x < 1024; x += 170) {
@@ -264,13 +341,13 @@ export class Ship {
     // Authentic One Piece Straw Hat Jolly Roger Emblem
     // ----------------------------------------------------
     ctx.save();
-    ctx.translate(512, 555);
-    ctx.scale(0.80, 0.80);
+    ctx.translate(512, 530);
+    ctx.scale(0.85, 0.85);
 
     // Crossed Bones (Dark pirate ink)
     ctx.fillStyle = '#110e0b';
     ctx.strokeStyle = '#110e0b';
-    ctx.lineWidth = 44;
+    ctx.lineWidth = 46;
     ctx.lineCap = 'round';
 
     // Bone 1: Top-Left to Bottom-Right
@@ -280,8 +357,8 @@ export class Ship {
     ctx.stroke();
     [-1, 1].forEach((dir) => {
       ctx.beginPath();
-      ctx.arc(dir * 310 - dir * 18, dir * 230 + 24, 32, 0, Math.PI * 2);
-      ctx.arc(dir * 310 + 24, dir * 230 - dir * 18, 32, 0, Math.PI * 2);
+      ctx.arc(dir * 310 - dir * 18, dir * 230 + 24, 34, 0, Math.PI * 2);
+      ctx.arc(dir * 310 + 24, dir * 230 - dir * 18, 34, 0, Math.PI * 2);
       ctx.fill();
     });
 
@@ -292,8 +369,8 @@ export class Ship {
     ctx.stroke();
     [-1, 1].forEach((dir) => {
       ctx.beginPath();
-      ctx.arc(dir * 310 - dir * 18, -dir * 230 - 24, 32, 0, Math.PI * 2);
-      ctx.arc(dir * 310 + 24, -dir * 230 + dir * 18, 32, 0, Math.PI * 2);
+      ctx.arc(dir * 310 - dir * 18, -dir * 230 - 24, 34, 0, Math.PI * 2);
+      ctx.arc(dir * 310 + 24, -dir * 230 + dir * 18, 34, 0, Math.PI * 2);
       ctx.fill();
     });
 
@@ -312,7 +389,7 @@ export class Ship {
     ctx.fill();
 
     // Large Round Hollow Eyes
-    ctx.fillStyle = '#f8f4e8';
+    ctx.fillStyle = '#fefce8';
     ctx.beginPath();
     ctx.ellipse(-65, 52, 48, 56, -0.06, 0, Math.PI * 2);
     ctx.ellipse(65, 52, 48, 56, 0.06, 0, Math.PI * 2);
@@ -327,7 +404,7 @@ export class Ship {
     ctx.fill();
 
     // Big One Piece Pirate Grin
-    ctx.strokeStyle = '#f8f4e8';
+    ctx.strokeStyle = '#fefce8';
     ctx.lineWidth = 14;
     ctx.lineCap = 'round';
     ctx.beginPath();
@@ -348,68 +425,85 @@ export class Ship {
     // ----------------------------------------------------
     // Hat Brim
     ctx.fillStyle = '#f59e0b';
-    ctx.strokeStyle = '#d97706';
-    ctx.lineWidth = 6;
     ctx.beginPath();
-    ctx.ellipse(0, -92, 280, 58, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, -95, 245, 52, 0, 0, Math.PI * 2);
     ctx.fill();
+    ctx.strokeStyle = '#b45309';
+    ctx.lineWidth = 6;
     ctx.stroke();
 
     // Hat Crown
+    ctx.fillStyle = '#f59e0b';
     ctx.beginPath();
-    ctx.ellipse(0, -170, 155, 115, 0, Math.PI, 0);
+    ctx.ellipse(0, -155, 138, 105, 0, Math.PI, 0, false);
     ctx.fill();
     ctx.stroke();
 
-    // Iconic Red Ribbon Band
+    // Red Ribbon Band
     ctx.fillStyle = '#dc2626';
     ctx.beginPath();
-    ctx.ellipse(0, -108, 155, 34, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, -118, 142, 28, 0, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.restore();
 
-    const tex = new THREE.CanvasTexture(canvas);
-    tex.colorSpace = THREE.SRGBColorSpace;
-    tex.needsUpdate = true;
-    return tex;
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.needsUpdate = true;
+    return texture;
   }
 
-  createPlainSailTexture() {
+  createSunnyPlainSailTexture() {
     const canvas = document.createElement('canvas');
-    canvas.width = 512;
-    canvas.height = 512;
+    canvas.width = 1024;
+    canvas.height = 1024;
     const ctx = canvas.getContext('2d');
 
-    ctx.fillStyle = '#f8f4e8';
-    ctx.fillRect(0, 0, 512, 512);
+    // Warm ivory base
+    ctx.fillStyle = '#fefce8';
+    ctx.fillRect(0, 0, 1024, 1024);
 
-    for (let i = 0; i < 4500; i++) {
-      const x = Math.random() * 512;
-      const y = Math.random() * 512;
+    // Sunny orange & yellow stripes on topsails
+    ctx.fillStyle = 'rgba(249, 115, 22, 0.85)';
+    ctx.fillRect(0, 50, 1024, 110);
+    ctx.fillRect(0, 860, 1024, 110);
+
+    ctx.fillStyle = 'rgba(245, 158, 11, 0.82)';
+    ctx.fillRect(0, 165, 1024, 45);
+    ctx.fillRect(0, 810, 1024, 45);
+
+    // Fabric weave
+    for (let i = 0; i < 9000; i++) {
+      const x = Math.random() * 1024;
+      const y = Math.random() * 1024;
       const shade = Math.random() * 24 - 12;
-      ctx.fillStyle = `rgba(${195 + shade}, ${185 + shade}, ${165 + shade}, 0.18)`;
+      ctx.fillStyle = `rgba(${210 + shade}, ${200 + shade}, ${180 + shade}, 0.16)`;
       ctx.fillRect(x, y, 2 + Math.random() * 3, 2 + Math.random() * 3);
     }
 
-    ctx.strokeStyle = 'rgba(125, 105, 80, 0.26)';
-    ctx.lineWidth = 2;
-    ctx.setLineDash([10, 8]);
-    for (let x = 85; x < 512; x += 90) {
+    // Seams
+    ctx.strokeStyle = 'rgba(125, 105, 80, 0.25)';
+    ctx.lineWidth = 3;
+    ctx.setLineDash([16, 12]);
+    for (let x = 170; x < 1024; x += 170) {
       ctx.beginPath();
       ctx.moveTo(x, 0);
-      ctx.lineTo(x, 512);
+      ctx.lineTo(x, 1024);
       ctx.stroke();
     }
 
-    const tex = new THREE.CanvasTexture(canvas);
-    tex.colorSpace = THREE.SRGBColorSpace;
-    tex.needsUpdate = true;
-    return tex;
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.needsUpdate = true;
+    return texture;
   }
 
-  createSailShaderMaterial(texture) {
+  createSailShaderMaterial(textureMap) {
     return new THREE.ShaderMaterial({
+      uniforms: {
+        uMap: { value: textureMap },
+        uTime: { value: 0 },
+        uSunDirection: { value: new THREE.Vector3(25, 55, -25).normalize() },
+        uSunColor: { value: new THREE.Color('#fffbeb') }
+      },
       vertexShader: `
         uniform float uTime;
         varying vec2 vUv;
@@ -418,127 +512,97 @@ export class Ship {
 
         void main() {
           vUv = uv;
-          vNormal = normalize(normalMatrix * normal);
-
           vec3 p = position;
-          // Smooth aerodynamic catenary billow curve + gentle natural flutter
-          float billow = sin(uv.y * 3.14159) * 0.52;
-          float flutter = sin(uTime * 2.2 + uv.y * 4.8 + uv.x * 3.6) * 0.07 * (1.0 - uv.y);
+
+          // Billowing canvas curvature + harmonic wind flutter
+          float billow = sin(vUv.x * 3.14159) * sin(vUv.y * 3.14159) * 0.42;
+          float flutter = sin(uTime * 2.8 + vUv.x * 6.0 + vUv.y * 4.0) * 0.05 * (1.0 - vUv.y);
           p.z += billow + flutter;
 
+          vNormal = normalize(normalMatrix * normal);
           vec4 worldPos = modelMatrix * vec4(p, 1.0);
           vWorldPosition = worldPos.xyz;
           gl_Position = projectionMatrix * viewMatrix * worldPos;
         }
       `,
       fragmentShader: `
-        uniform float uTime;
-        uniform sampler2D uSailMap;
+        uniform sampler2D uMap;
         uniform vec3 uSunDirection;
         uniform vec3 uSunColor;
-        
         varying vec2 vUv;
         varying vec3 vNormal;
         varying vec3 vWorldPosition;
 
         void main() {
-          vec3 viewDir = normalize(cameraPosition - vWorldPosition);
-          vec3 lightDir = normalize(uSunDirection);
-          vec3 n = normalize(vNormal);
+          vec4 texColor = texture2D(uMap, vUv);
+          vec3 norm = normalize(vNormal);
 
-          // Sunlight transmission through translucent canvas cloth
-          float backlight = pow(max(dot(-viewDir, lightDir), 0.0), 2.2) * 0.55;
-          float frontlight = max(dot(n, lightDir), 0.0) * 0.75;
-          float ambientCloth = 0.60;
+          // Standard diffuse lighting
+          float nDotL = dot(norm, uSunDirection);
+          float directLight = max(nDotL, 0.0);
 
-          vec4 texColor = texture2D(uSailMap, vUv);
+          // Translucent fabric transmission (Subsurface backlight through canvas)
+          float backLight = max(-nDotL, 0.0) * 0.65;
+          float totalLight = 0.45 + directLight * 0.65 + backLight;
 
-          vec3 finalIllumination = (ambientCloth + frontlight) * vec3(0.98, 0.97, 0.94) + backlight * uSunColor * 1.05;
-          gl_FragColor = vec4(texColor.rgb * finalIllumination, 1.0);
+          vec3 finalColor = texColor.rgb * totalLight * uSunColor;
+          gl_FragColor = vec4(finalColor, 1.0);
         }
       `,
-      uniforms: {
-        uTime: { value: 0 },
-        uSailMap: { value: texture },
-        uSunDirection: { value: new THREE.Vector3(25, 55, -25) },
-        uSunColor: { value: new THREE.Color('#fff7ed') }
-      },
       side: THREE.DoubleSide
     });
   }
 
   buildShipModel() {
     // ----------------------------------------------------
-    // 1. Realistic Naval Galleon Hull with Tumblehome & Sheer
+    // 1. Thousand Sunny Master Hull Architecture
     // ----------------------------------------------------
-    const hullGeo = new THREE.BoxGeometry(3.1, 2.5, 9.8, 6, 4, 14);
-    const pos = hullGeo.attributes.position;
+    const hullGeometry = new THREE.BoxGeometry(3.2, 2.4, 9.6, 6, 4, 16);
+    const pos = hullGeometry.attributes.position;
+    const vertex = new THREE.Vector3();
+
     for (let i = 0; i < pos.count; i++) {
-      let x = pos.getX(i);
-      let y = pos.getY(i);
-      let z = pos.getZ(i);
+      vertex.fromBufferAttribute(pos, i);
 
-      // Bow flare & upward sheer (z > 0)
-      if (z > 0) {
-        let t = z / 4.9;
-        let taper = 1.0 - t * 0.74;
-        pos.setX(i, x * taper);
-        pos.setY(i, y + t * t * 0.78); // dramatic upward prow curve
-        if (y < 0) {
-          pos.setX(i, pos.getX(i) * 0.52); // sharp V-entry keel
-        }
+      // Ship Prow (Bow tapering)
+      if (vertex.z > 1.0) {
+        const bowTaper = Math.max(0.12, 1.0 - ((vertex.z - 1.0) / 3.8) * 0.72);
+        vertex.x *= bowTaper;
+        vertex.y += (vertex.z - 1.0) * 0.16; // Forecastle sheer lift
       }
-      // Stern quarterdeck lift and tumblehome (z < 0)
-      if (z < 0) {
-        let t = Math.abs(z) / 4.9;
-        let taper = 1.0 - t * 0.28;
-        pos.setX(i, x * taper);
-        pos.setY(i, y + t * 0.68); // elevated poop deck
-        if (y > 0.5) {
-          pos.setX(i, pos.getX(i) * 0.92); // inward tumblehome
-        }
+
+      // Ship Poop Deck (Stern rounding)
+      if (vertex.z < -1.0) {
+        const sternTaper = Math.max(0.35, 1.0 - (Math.abs(vertex.z + 1.0) / 3.8) * 0.28);
+        vertex.x *= sternTaper;
+        vertex.y += Math.abs(vertex.z + 1.0) * 0.24; // High poop deck sheer
       }
+
+      // Tumblehome & Rounded Bottom
+      if (vertex.y < 0) {
+        const keelTaper = Math.max(0.15, 1.0 + (vertex.y / 1.2) * 0.65);
+        vertex.x *= keelTaper;
+      }
+
+      pos.setXYZ(i, vertex.x, vertex.y, vertex.z);
     }
-    hullGeo.computeVertexNormals();
+    hullGeometry.computeVertexNormals();
 
-    const hullMesh = new THREE.Mesh(hullGeo, this.hullMat);
-    hullMesh.position.y = 1.1;
+    const hullMesh = new THREE.Mesh(hullGeometry, this.hullMat);
+    hullMesh.position.y = 1.08;
     hullMesh.castShadow = true;
     hullMesh.receiveShadow = true;
     this.group.add(hullMesh);
 
-    // Submerged Copper Keel
-    const keelGeo = new THREE.BoxGeometry(1.6, 1.5, 9.4, 2, 2, 8);
-    const keelPos = keelGeo.attributes.position;
-    for (let i = 0; i < keelPos.count; i++) {
-      let z = keelPos.getZ(i);
-      let y = keelPos.getY(i);
-      if (z > 0) {
-        let t = z / 4.7;
-        keelPos.setX(i, keelPos.getX(i) * (1.0 - t * 0.68));
-      }
-      if (y < 0) {
-        keelPos.setX(i, keelPos.getX(i) * 0.38);
-      }
-    }
-    keelGeo.computeVertexNormals();
-    const keelMesh = new THREE.Mesh(keelGeo, this.lowerHullMat);
-    keelMesh.position.y = -0.35;
-    keelMesh.castShadow = true;
-    this.group.add(keelMesh);
-
-    // Continuous Wooden Wale Strakes (Horizontal reinforcing ribs)
-    const strakeGeo = new THREE.BoxGeometry(3.22, 0.16, 9.8);
-    const strake1 = new THREE.Mesh(strakeGeo, this.darkWoodMat);
-    strake1.position.y = 1.68;
-    this.group.add(strake1);
-
-    const strake2 = new THREE.Mesh(strakeGeo, this.darkWoodMat);
-    strake2.position.y = 0.96;
-    this.group.add(strake2);
+    // Waterline Lower Keel
+    const lowerHullGeo = new THREE.CylinderGeometry(0.38, 0.14, 9.6, 12);
+    lowerHullGeo.rotateX(Math.PI / 2);
+    const lowerHull = new THREE.Mesh(lowerHullGeo, this.lowerHullMat);
+    lowerHull.position.y = 0.08;
+    this.group.add(lowerHull);
 
     // Gilded Gunwale Railing Capping
-    const railGeo = new THREE.BoxGeometry(3.26, 0.20, 10.0);
+    const railGeo = new THREE.BoxGeometry(3.32, 0.20, 10.0);
     const railMesh = new THREE.Mesh(railGeo, this.goldMat);
     railMesh.position.y = 2.26;
     this.group.add(railMesh);
@@ -546,13 +610,28 @@ export class Ship {
     this.createHullDetail();
 
     // ----------------------------------------------------
-    // 2. Main Deck Planking & Deck Furniture
+    // 2. Main Lawn Deck & Central Flagstone Walkway
     // ----------------------------------------------------
+    // Wooden subdeck
     const mainDeckGeo = new THREE.BoxGeometry(2.88, 0.15, 9.4);
     const mainDeck = new THREE.Mesh(mainDeckGeo, this.deckMat);
     mainDeck.position.y = 2.18;
     mainDeck.receiveShadow = true;
     this.group.add(mainDeck);
+
+    // Thousand Sunny Lawn Turf (Real Grass on the Main Deck)
+    const lawnGeo = new THREE.BoxGeometry(2.70, 0.04, 5.2);
+    const lawnMesh = new THREE.Mesh(lawnGeo, this.lawnMat);
+    lawnMesh.position.set(0, 2.26, 0.2);
+    lawnMesh.receiveShadow = true;
+    this.group.add(lawnMesh);
+
+    // Central Stone Paver Path through the Lawn
+    const stonePathGeo = new THREE.BoxGeometry(0.68, 0.045, 5.2);
+    const stonePath = new THREE.Mesh(stonePathGeo, this.stoneMat);
+    stonePath.position.set(0, 2.27, 0.2);
+    stonePath.receiveShadow = true;
+    this.group.add(stonePath);
 
     // Forecastle Raised Deck (Forward)
     const foreDeckGeo = new THREE.BoxGeometry(2.65, 0.42, 2.3);
@@ -563,12 +642,12 @@ export class Ship {
     // Deck Grating Hatch
     const hatchGeo = new THREE.BoxGeometry(1.25, 0.12, 1.45);
     const hatchMesh = new THREE.Mesh(hatchGeo, this.darkWoodMat);
-    hatchMesh.position.set(0, 2.28, 0.6);
+    hatchMesh.position.set(0, 2.30, 0.6);
     this.group.add(hatchMesh);
 
     // Forecastle Capstan
     const capstanGeo = new THREE.CylinderGeometry(0.24, 0.28, 0.58, 10);
-    const capstan = new THREE.Mesh(capstanGeo, this.darkWoodMat);
+    const capstan = new THREE.Mesh(capstanGeo, this.goldMat);
     capstan.position.set(0, 2.95, 3.3);
     this.group.add(capstan);
 
@@ -582,7 +661,7 @@ export class Ship {
     });
 
     // ----------------------------------------------------
-    // 4. Stern Castle & Ornate Captain's Cabin
+    // 4. Stern Castle, Coup de Burst & Aquarium Lounge
     // ----------------------------------------------------
     const cabinGeo = new THREE.BoxGeometry(2.75, 1.85, 3.1);
     const cabinMesh = new THREE.Mesh(cabinGeo, this.hullMat);
@@ -595,17 +674,6 @@ export class Ship {
     const poopDeck = new THREE.Mesh(poopDeckGeo, this.goldMat);
     poopDeck.position.set(0, 4.08, -3.15);
     this.group.add(poopDeck);
-
-    // Stern Gallery Glazed Windows (Captain's Stateroom)
-    const sternWindowGeo = new THREE.PlaneGeometry(2.1, 1.1);
-    const sternWindowMat = new THREE.MeshBasicMaterial({
-      color: 0xfef08a,
-      side: THREE.DoubleSide
-    });
-    const sternWindow = new THREE.Mesh(sternWindowGeo, sternWindowMat);
-    sternWindow.position.set(0, 3.15, -4.72);
-    sternWindow.rotation.y = Math.PI;
-    this.group.add(sternWindow);
 
     // Stern Carved Balustrade
     const sternBalustradeGeo = new THREE.BoxGeometry(2.85, 0.42, 0.15);
@@ -621,42 +689,48 @@ export class Ship {
     this.createShipHelm(0, 4.22, -2.4);
 
     // ----------------------------------------------------
-    // 6. Admiralty Anchors (Port & Starboard Bow)
+    // 6. Thousand Sunny Lion-Paw Anchors (Port & Starboard Bow)
     // ----------------------------------------------------
-    this.createAnchor(-1.62, 1.45, 4.1, -1);
-    this.createAnchor(1.62, 1.45, 4.1, 1);
+    this.createLionPawAnchor(-1.62, 1.55, 4.1, -1);
+    this.createLionPawAnchor(1.62, 1.55, 4.1, 1);
 
     // ----------------------------------------------------
-    // 7. Thousand Sunny Lion Figurehead & Aligned Bowsprit
+    // 7. Authentic Thousand Sunny Lion Figurehead (King of Beasts)
     // ----------------------------------------------------
     const figureheadGroup = new THREE.Group();
     figureheadGroup.position.set(0, 2.65, 5.05);
 
     // Sculpted Golden Lion Head
-    const headGeo = new THREE.SphereGeometry(0.65, 24, 24);
+    const headGeo = new THREE.SphereGeometry(0.68, 24, 24);
     const headMesh = new THREE.Mesh(headGeo, this.goldMat);
     figureheadGroup.add(headMesh);
 
-    // Lion Muzzle & Happy Mouth
-    const muzzleGeo = new THREE.CylinderGeometry(0.24, 0.32, 0.38, 16);
+    // Lion Muzzle & Open Smiling Mouth
+    const muzzleGeo = new THREE.CylinderGeometry(0.26, 0.34, 0.40, 16);
     muzzleGeo.rotateX(Math.PI / 2);
     const muzzleMesh = new THREE.Mesh(muzzleGeo, this.goldMat);
-    muzzleMesh.position.set(0, -0.10, 0.42);
+    muzzleMesh.position.set(0, -0.08, 0.42);
     figureheadGroup.add(muzzleMesh);
 
-    // Smiling Lion Nose
+    // Gaon Cannon Barrel inside Mouth (The Sunny's Ultimate Superweapon)
+    const gaonGeo = new THREE.CylinderGeometry(0.13, 0.13, 0.36, 16);
+    gaonGeo.rotateX(Math.PI / 2);
+    const gaonMesh = new THREE.Mesh(gaonGeo, this.ironMat);
+    gaonMesh.position.set(0, -0.08, 0.50);
+    figureheadGroup.add(gaonMesh);
+
+    const gaonMuzzleRingGeo = new THREE.TorusGeometry(0.14, 0.025, 8, 16);
+    const gaonMuzzleRing = new THREE.Mesh(gaonMuzzleRingGeo, this.goldMat);
+    gaonMuzzleRing.position.set(0, -0.08, 0.68);
+    figureheadGroup.add(gaonMuzzleRing);
+
+    // Cute Lion Nose
     const noseGeo = new THREE.SphereGeometry(0.08, 12, 12);
-    const noseMesh = new THREE.Mesh(noseGeo, this.crimsonWoodMat);
-    noseMesh.position.set(0, 0.04, 0.62);
+    const noseMesh = new THREE.Mesh(noseGeo, this.paintRedMat);
+    noseMesh.position.set(0, 0.06, 0.65);
     figureheadGroup.add(noseMesh);
 
-    // Layered muzzle plates and cheek whiskers give the Sunny figurehead a readable silhouette.
-    const muzzlePlateGeo = new THREE.TorusGeometry(0.22, 0.035, 8, 18);
-    const muzzlePlate = new THREE.Mesh(muzzlePlateGeo, this.goldMat);
-    muzzlePlate.position.set(0, -0.10, 0.61);
-    muzzlePlate.rotation.x = Math.PI / 2;
-    figureheadGroup.add(muzzlePlate);
-
+    // Layered Muzzle Plate & Whiskers
     [-1, 1].forEach((side) => {
       const whiskerGeo = new THREE.CylinderGeometry(0.018, 0.018, 0.52, 6);
       const whisker = new THREE.Mesh(whiskerGeo, this.goldMat);
@@ -668,10 +742,10 @@ export class Ship {
 
     // Stylized Dark Eyes for Lion Face
     [-0.22, 0.22].forEach((eyeX) => {
-      const eyeGeo = new THREE.SphereGeometry(0.065, 12, 12);
+      const eyeGeo = new THREE.SphereGeometry(0.068, 12, 12);
       const eyeMat = new THREE.MeshBasicMaterial({ color: 0x18181b });
       const eye = new THREE.Mesh(eyeGeo, eyeMat);
-      eye.position.set(eyeX, 0.16, 0.58);
+      eye.position.set(eyeX, 0.18, 0.60);
       figureheadGroup.add(eye);
     });
 
@@ -679,45 +753,52 @@ export class Ship {
     [-0.38, 0.38].forEach((earX) => {
       const earGeo = new THREE.ConeGeometry(0.16, 0.32, 10);
       const earMesh = new THREE.Mesh(earGeo, this.goldMat);
-      earMesh.position.set(earX, 0.52, 0.12);
+      earMesh.position.set(earX, 0.54, 0.12);
       earMesh.rotation.z = -earX * 0.9;
       figureheadGroup.add(earMesh);
     });
 
-    // Sculpted Golden Crossbones on Bow Stem
+    // Pure White Crossbones mounted behind the head
     [-1, 1].forEach((dir) => {
-      const boneGeo = new THREE.CylinderGeometry(0.05, 0.05, 1.25, 8);
-      const bone = new THREE.Mesh(boneGeo, this.goldMat);
-      bone.position.set(0, -0.62, 0.38);
+      const boneGeo = new THREE.CylinderGeometry(0.065, 0.065, 1.85, 8);
+      const bone = new THREE.Mesh(boneGeo, this.boneMat);
+      bone.position.set(0, 0, -0.15);
       bone.rotation.z = dir * Math.PI / 4;
       figureheadGroup.add(bone);
+
+      // Bone Knobs
+      [-0.92, 0.92].forEach((bp) => {
+        const knobGeo = new THREE.SphereGeometry(0.11, 8, 8);
+        const knob1 = new THREE.Mesh(knobGeo, this.boneMat);
+        knob1.position.set(bp * Math.cos(dir * Math.PI / 4) + 0.05, bp * Math.sin(dir * Math.PI / 4) + 0.05, -0.15);
+        figureheadGroup.add(knob1);
+      });
     });
 
-    // 12 Radiating Solar Petals (Sunny Mane)
-    const petalCount = 12;
+    // 16 Radiating Sunflower Petals (Authentic Thousand Sunny Mane)
+    const petalCount = 16;
     for (let i = 0; i < petalCount; i++) {
       const angle = (i / petalCount) * Math.PI * 2;
-      const petalGeo = new THREE.ConeGeometry(0.20, 0.85, 10);
+      const petalGeo = new THREE.ConeGeometry(0.18, 0.88, 10);
       const petalMesh = new THREE.Mesh(petalGeo, this.goldMat);
-      petalMesh.position.set(Math.cos(angle) * 0.78, Math.sin(angle) * 0.78, -0.12);
+      petalMesh.position.set(Math.cos(angle) * 0.82, Math.sin(angle) * 0.82, -0.10);
       petalMesh.rotation.z = angle - Math.PI / 2;
       petalMesh.rotation.x = Math.PI / 2;
       figureheadGroup.add(petalMesh);
     }
 
-    const maneRingGeo = new THREE.TorusGeometry(0.78, 0.07, 10, 28);
+    const maneRingGeo = new THREE.TorusGeometry(0.82, 0.07, 10, 32);
     const maneRing = new THREE.Mesh(maneRingGeo, this.goldMat);
-    maneRing.position.z = -0.13;
+    maneRing.position.z = -0.12;
     figureheadGroup.add(maneRing);
 
     // Bowsprit Extending Forward & Gently Upward
-    // Aligned directly along ship's prow (Z-axis) at 18 degrees upward rake
     const bowspritLength = 4.2;
     const bowspritGeo = new THREE.CylinderGeometry(0.09, 0.18, bowspritLength, 12);
     bowspritGeo.rotateX(Math.PI / 2);
-    bowspritGeo.translate(0, 0, bowspritLength / 2); // pivot at base
+    bowspritGeo.translate(0, 0, bowspritLength / 2);
     const bowspritMesh = new THREE.Mesh(bowspritGeo, this.hullMat);
-    bowspritMesh.rotation.x = -0.32; // upward rake
+    bowspritMesh.rotation.x = -0.32;
     bowspritMesh.position.set(0, 0.35, 0.2);
     bowspritMesh.castShadow = true;
     figureheadGroup.add(bowspritMesh);
@@ -736,24 +817,22 @@ export class Ship {
     // ----------------------------------------------------
     // 8. Triangular Jib Staysails
     // ----------------------------------------------------
-    // Inner Jib Sail
     this.createJibSail(0, 2.7, 5.8, 0, 7.2, 2.8, 0, 3.3, 3.7);
-    // Outer Flying Jib Sail
     this.createJibSail(0, 3.8, 7.8, 0, 8.4, 2.8, 0, 4.4, 4.8);
 
     // ----------------------------------------------------
-    // 9. Three Tiered Masts with Full Rigging & Billowing Sails
+    // 9. Three Tiered Masts with Observation Dome Crow's Nest
     // ----------------------------------------------------
-    // Main Mast (Center, largest - displaying Straw Hat Jolly Roger)
-    this.createMast(0, 2.18, 0.1, 9.6, 4.4, 3.3, true);
+    // Mainmast (Center - displaying iconic Straw Hat Jolly Roger on billowing sunny canvas)
+    this.createMast(0, 2.18, 0.1, 9.6, 4.2, 3.3, true, true);
 
-    // Foremast (Forward - displaying clean ivory topsail)
-    this.createMast(0, 2.52, 2.8, 7.8, 3.4, 2.6, false);
+    // Foremast (Forward - displaying yellow/orange striped topsail)
+    this.createMast(0, 2.52, 2.8, 7.8, 3.4, 2.6, false, false);
 
-    // Mizzenmast (Aft on cabin - clean ivory sail)
-    this.createMast(0, 4.18, -3.1, 5.9, 2.5, 1.9, false);
+    // Mizzenmast (Aft on cabin - clean sunny sail)
+    this.createMast(0, 4.18, -3.1, 5.9, 2.5, 1.9, false, false);
 
-    // Standing Rigging: Shrouds with Realistic Ratlines (Rope Ladders)
+    // Standing Rigging: Shrouds with Realistic Ratlines
     this.createShroudsWithRatlines(-1.52, 2.2, 0.1, 0, 8.6, 0.1);
     this.createShroudsWithRatlines(1.52, 2.2, 0.1, 0, 8.6, 0.1);
     this.createShroudsWithRatlines(-1.48, 2.4, 2.8, 0, 7.0, 2.8);
@@ -766,10 +845,10 @@ export class Ship {
     // ----------------------------------------------------
     // 10. Warm Brass Deck Lanterns
     // ----------------------------------------------------
-    this.createOrnateLantern(0, 3.7, 4.9);      // Bow Lantern
-    this.createOrnateLantern(-1.52, 2.55, 0.2); // Port Midship Lantern
-    this.createOrnateLantern(1.52, 2.55, 0.2);  // Starboard Midship Lantern
-    this.createOrnateLantern(0, 4.75, -4.5);    // Stern Gallery Lantern
+    this.createOrnateLantern(0, 3.7, 4.9);
+    this.createOrnateLantern(-1.52, 2.55, 0.2);
+    this.createOrnateLantern(1.52, 2.55, 0.2);
+    this.createOrnateLantern(0, 4.75, -4.5);
 
     // Hero Staging: Positioned on the right with a 3/4 cinematic angle
     this.group.scale.set(0.85, 0.85, 0.85);
@@ -778,14 +857,14 @@ export class Ship {
   }
 
   createHullDetail() {
-    // Gold sheer stripe follows the visible port/starboard profile and makes the Sunny read at a glance.
+    // Gold sheer stripe follows the visible profile
     const stripeGeo = new THREE.BoxGeometry(3.30, 0.11, 9.25, 2, 1, 12);
     const stripe = new THREE.Mesh(stripeGeo, this.goldMat);
     stripe.position.y = 1.42;
     stripe.castShadow = true;
     this.group.add(stripe);
 
-    // Repeated framed portholes add scale and break up the broad hull side.
+    // Framed portholes
     const portholeRingGeo = new THREE.TorusGeometry(0.16, 0.035, 8, 16);
     const portholeGeo = new THREE.CircleGeometry(0.12, 16);
     [-1, 1].forEach((side) => {
@@ -802,7 +881,7 @@ export class Ship {
       });
     });
 
-    // Short vertical ribs suggest real framing without adding a heavy high-poly hull.
+    // Vertical ribs along hull side
     [-3.8, -2.6, -1.4, -0.2, 1.0, 2.2, 3.4].forEach((z) => {
       [-1, 1].forEach((side) => {
         const ribGeo = new THREE.BoxGeometry(0.08, 0.92, 0.16);
@@ -813,7 +892,7 @@ export class Ship {
       });
     });
 
-    // Red sunburst panels are a signature Sunny accent beneath the gunwale.
+    // Red sunburst panels beneath the gunwale
     [-1, 1].forEach((side) => {
       const panelGeo = new THREE.BoxGeometry(0.08, 0.34, 1.4);
       const panel = new THREE.Mesh(panelGeo, this.paintRedMat);
@@ -822,7 +901,30 @@ export class Ship {
       this.group.add(panel);
     });
 
-    // Raised cleats and mooring bollards make the forecastle feel functional.
+    // ----------------------------------------------------
+    // Soldier Dock System Dials (Channels 0–6)
+    // ----------------------------------------------------
+    [-1, 1].forEach((side) => {
+      const dockDialGeo = new THREE.CylinderGeometry(0.48, 0.48, 0.12, 24);
+      dockDialGeo.rotateZ(Math.PI / 2);
+      const dockDial = new THREE.Mesh(dockDialGeo, this.darkWoodMat);
+      dockDial.position.set(side * 1.60, 1.05, 0.0);
+      this.group.add(dockDial);
+
+      const dockRimGeo = new THREE.TorusGeometry(0.48, 0.045, 8, 24);
+      dockRimGeo.rotateY(Math.PI / 2);
+      const dockRim = new THREE.Mesh(dockRimGeo, this.goldMat);
+      dockRim.position.set(side * 1.62, 1.05, 0.0);
+      this.group.add(dockRim);
+
+      // Red paddlewheel casing
+      const paddleCasingGeo = new THREE.BoxGeometry(0.18, 0.72, 1.35);
+      const paddleCasing = new THREE.Mesh(paddleCasingGeo, this.paintRedMat);
+      paddleCasing.position.set(side * 1.63, 0.75, 0.0);
+      this.group.add(paddleCasing);
+    });
+
+    // Forecastle bollards with caps
     [-0.85, 0.85].forEach((x) => {
       const bollardGeo = new THREE.CylinderGeometry(0.10, 0.13, 0.42, 10);
       const bollard = new THREE.Mesh(bollardGeo, this.goldMat);
@@ -836,21 +938,37 @@ export class Ship {
   }
 
   createSternDetail() {
-    // Framed stern windows with warm cabin light.
-    [-0.78, 0, 0.78].forEach((x) => {
-      const frameGeo = new THREE.BoxGeometry(0.48, 0.62, 0.08);
+    // ----------------------------------------------------
+    // Coup de Burst Giant Propulsion Thruster (Rear Jet Cannon)
+    // ----------------------------------------------------
+    const coupGeo = new THREE.CylinderGeometry(0.55, 0.65, 0.85, 20);
+    coupGeo.rotateX(Math.PI / 2);
+    const coupMesh = new THREE.Mesh(coupGeo, this.ironMat);
+    coupMesh.position.set(0, 1.65, -4.85);
+    this.group.add(coupMesh);
+
+    const coupRimGeo = new THREE.TorusGeometry(0.56, 0.06, 8, 24);
+    const coupRim = new THREE.Mesh(coupRimGeo, this.goldMat);
+    coupRim.position.set(0, 1.65, -5.28);
+    this.group.add(coupRim);
+
+    // ----------------------------------------------------
+    // Aquarium Lounge Curved Bay Windows
+    // ----------------------------------------------------
+    [-0.85, 0, 0.85].forEach((x) => {
+      const frameGeo = new THREE.BoxGeometry(0.54, 0.72, 0.08);
       const frame = new THREE.Mesh(frameGeo, this.goldMat);
       frame.position.set(x, 3.28, -4.77);
       this.group.add(frame);
 
-      const paneGeo = new THREE.PlaneGeometry(0.34, 0.46);
+      const paneGeo = new THREE.PlaneGeometry(0.42, 0.58);
       const pane = new THREE.Mesh(paneGeo, this.windowMat);
       pane.position.set(x, 3.28, -4.82);
       pane.rotation.y = Math.PI;
       this.group.add(pane);
     });
 
-    // Two small stern balconies make the rear silhouette less box-like.
+    // Stern balconies
     [-1, 1].forEach((side) => {
       const balconyGeo = new THREE.BoxGeometry(0.72, 0.10, 0.58);
       const balcony = new THREE.Mesh(balconyGeo, this.deckMat);
@@ -865,19 +983,52 @@ export class Ship {
       });
     });
 
-    // Stern flag staff and a compact red pennant.
+    // Flag staff & Straw Hat pirate pennant
     const staffGeo = new THREE.CylinderGeometry(0.035, 0.05, 1.15, 8);
     const staff = new THREE.Mesh(staffGeo, this.darkWoodMat);
     staff.position.set(0, 5.03, -4.42);
     this.group.add(staff);
-    const pennantGeo = new THREE.PlaneGeometry(0.72, 0.34);
+
+    const pennantGeo = new THREE.PlaneGeometry(0.85, 0.38);
     const pennant = new THREE.Mesh(pennantGeo, new THREE.MeshStandardMaterial({
       color: 0xdc2626,
       roughness: 0.55,
       side: THREE.DoubleSide
     }));
-    pennant.position.set(0.36, 5.42, -4.42);
+    pennant.position.set(0.42, 5.42, -4.42);
     this.group.add(pennant);
+  }
+
+  createLionPawAnchor(x, y, z, side = 1) {
+    const anchorGroup = new THREE.Group();
+    anchorGroup.position.set(x, y, z);
+    anchorGroup.rotation.z = side * -Math.PI / 6;
+
+    // Shank
+    const shankGeo = new THREE.CylinderGeometry(0.065, 0.065, 1.45, 8);
+    const shank = new THREE.Mesh(shankGeo, this.ironMat);
+    anchorGroup.add(shank);
+
+    // Wooden Stock
+    const stockGeo = new THREE.BoxGeometry(0.14, 0.14, 0.95);
+    const stock = new THREE.Mesh(stockGeo, this.darkWoodMat);
+    stock.position.y = 0.54;
+    anchorGroup.add(stock);
+
+    // Thousand Sunny Signature Lion Paw Flukes
+    const pawCenterGeo = new THREE.SphereGeometry(0.22, 12, 12);
+    const pawCenter = new THREE.Mesh(pawCenterGeo, this.goldMat);
+    pawCenter.position.y = -0.72;
+    anchorGroup.add(pawCenter);
+
+    [-0.18, 0, 0.18].forEach((toeX) => {
+      const toeGeo = new THREE.SphereGeometry(0.10, 10, 10);
+      const toe = new THREE.Mesh(toeGeo, this.paintRedMat);
+      toe.position.set(toeX, -0.92, 0.08);
+      anchorGroup.add(toe);
+    });
+
+    this.group.add(anchorGroup);
   }
 
   createJibSail(x1, y1, z1, x2, y2, z2, x3, y3, z3) {
@@ -886,47 +1037,92 @@ export class Ship {
       x1, y1, z1,
       x2, y2, z2,
       x3, y3, z3,
-      // Double sided triangle
+      x1, y1, z1,
       x3, y3, z3,
-      x2, y2, z2,
-      x1, y1, z1
+      x2, y2, z2
     ]);
     const uvs = new Float32Array([
       0.0, 0.0,
       0.5, 1.0,
       1.0, 0.0,
+      0.0, 0.0,
       1.0, 0.0,
-      0.5, 1.0,
-      0.0, 0.0
+      0.5, 1.0
     ]);
     geom.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
     geom.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
     geom.computeVertexNormals();
 
-    const jibMesh = new THREE.Mesh(geom, this.plainSailMat);
-    this.group.add(jibMesh);
+    const mesh = new THREE.Mesh(geom, this.plainSailMat);
+    mesh.castShadow = true;
+    this.sails.push(mesh);
+    this.group.add(mesh);
   }
 
-  createCannon(x, y, z, rotationY) {
+  createRopeStay(x1, y1, z1, x2, y2, z2) {
+    const p1 = new THREE.Vector3(x1, y1, z1);
+    const p2 = new THREE.Vector3(x2, y2, z2);
+    const length = p1.distanceTo(p2);
+
+    const geo = new THREE.CylinderGeometry(0.018, 0.018, length, 6);
+    geo.translate(0, length / 2, 0);
+    geo.rotateX(Math.PI / 2);
+
+    const mesh = new THREE.Mesh(geo, this.ropeMat);
+    mesh.position.copy(p1);
+    mesh.lookAt(p2);
+    this.group.add(mesh);
+  }
+
+  createShroudsWithRatlines(deckX, deckY, deckZ, mastTopX, mastTopY, mastTopZ) {
+    const shroudGroup = new THREE.Group();
+    const numLines = 4;
+    const shroudSpread = 0.52;
+
+    for (let i = 0; i < numLines; i++) {
+      const zOffset = (i - (numLines - 1) / 2) * (shroudSpread / numLines);
+      const start = new THREE.Vector3(deckX, deckY, deckZ + zOffset);
+      const end = new THREE.Vector3(mastTopX, mastTopY, mastTopZ);
+      const length = start.distanceTo(end);
+
+      const geo = new THREE.CylinderGeometry(0.016, 0.016, length, 4);
+      geo.translate(0, length / 2, 0);
+      geo.rotateX(Math.PI / 2);
+
+      const rope = new THREE.Mesh(geo, this.ropeMat);
+      rope.position.copy(start);
+      rope.lookAt(end);
+      shroudGroup.add(rope);
+    }
+
+    // Horizontal Ratlines (Rope ladder rungs)
+    const numRatlines = 10;
+    const startHeight = deckY + 0.45;
+    const endHeight = mastTopY - 0.75;
+
+    for (let r = 0; r < numRatlines; r++) {
+      const t = r / (numRatlines - 1);
+      const curY = lerp(startHeight, endHeight, t);
+      const curX = lerp(deckX, mastTopX, t);
+      const curZ = lerp(deckZ, mastTopZ, t);
+      const rungWidth = shroudSpread * (1.0 - t * 0.75);
+
+      const rungGeo = new THREE.CylinderGeometry(0.012, 0.012, rungWidth, 4);
+      rungGeo.rotateX(Math.PI / 2);
+      const rung = new THREE.Mesh(rungGeo, this.ropeMat);
+      rung.position.set(curX, curY, curZ);
+      shroudGroup.add(rung);
+    }
+
+    this.group.add(shroudGroup);
+  }
+
+  createCannon(x, y, z, rotY) {
     const cannonGroup = new THREE.Group();
     cannonGroup.position.set(x, y, z);
-    cannonGroup.rotation.y = rotationY;
+    cannonGroup.rotation.y = rotY;
 
-    // Recessed Dark Gunport Opening
-    const portHoleGeo = new THREE.BoxGeometry(0.52, 0.52, 0.08);
-    const portHoleMat = new THREE.MeshBasicMaterial({ color: 0x09090b });
-    const portHole = new THREE.Mesh(portHoleGeo, portHoleMat);
-    portHole.position.set(0, 0, -0.02);
-    cannonGroup.add(portHole);
-
-    // Weathered Red Oak Gunport Lid
-    const portLidGeo = new THREE.BoxGeometry(0.50, 0.50, 0.07);
-    const portLid = new THREE.Mesh(portLidGeo, this.crimsonWoodMat);
-    portLid.position.set(0, 0.32, 0.16);
-    portLid.rotation.x = -Math.PI / 3.8; // realistically propped open
-    cannonGroup.add(portLid);
-
-    // Tapered Cast-Iron Cannon Barrel with Reinforce Rings
+    // Cannon Barrel
     const barrelGeo = new THREE.CylinderGeometry(0.09, 0.15, 1.05, 14);
     barrelGeo.rotateZ(Math.PI / 2);
     const barrel = new THREE.Mesh(barrelGeo, this.ironMat);
@@ -982,37 +1178,11 @@ export class Ship {
     this.group.add(helmGroup);
   }
 
-  createAnchor(x, y, z, side = 1) {
-    const anchorGroup = new THREE.Group();
-    anchorGroup.position.set(x, y, z);
-    anchorGroup.rotation.z = side * -Math.PI / 6;
-
-    // Shank
-    const shankGeo = new THREE.CylinderGeometry(0.065, 0.065, 1.45, 8);
-    const shank = new THREE.Mesh(shankGeo, this.ironMat);
-    anchorGroup.add(shank);
-
-    // Wooden Stock
-    const stockGeo = new THREE.BoxGeometry(0.14, 0.14, 0.95);
-    const stock = new THREE.Mesh(stockGeo, this.darkWoodMat);
-    stock.position.y = 0.54;
-    anchorGroup.add(stock);
-
-    // Flukes
-    const flukeGeo = new THREE.TorusGeometry(0.42, 0.065, 6, 12, Math.PI);
-    const fluke = new THREE.Mesh(flukeGeo, this.ironMat);
-    fluke.position.y = -0.65;
-    fluke.rotation.z = Math.PI;
-    anchorGroup.add(fluke);
-
-    this.group.add(anchorGroup);
-  }
-
-  createMast(x, y, z, height, yardWidth, sailHeight, hasJollyRoger = false) {
+  createMast(x, y, z, height, yardWidth, sailHeight, hasJollyRoger = false, isMainObservationMast = false) {
     const mastGroup = new THREE.Group();
     mastGroup.position.set(x, y, z);
 
-    // Lower Mast & Topmast
+    // Mast Spar
     const mastGeo = new THREE.CylinderGeometry(0.11, 0.20, height, 12);
     const mastMesh = new THREE.Mesh(mastGeo, this.darkWoodMat);
     mastMesh.position.y = height / 2;
@@ -1033,11 +1203,32 @@ export class Ship {
     topYard.position.y = height * 0.95;
     mastGroup.add(topYard);
 
-    // Crow's Nest / Fighting Top Platform
-    const nestGeo = new THREE.CylinderGeometry(0.55, 0.46, 0.60, 12, 1, true);
-    const nestMesh = new THREE.Mesh(nestGeo, this.hullMat);
-    nestMesh.position.y = height * 0.80;
-    mastGroup.add(nestMesh);
+    if (isMainObservationMast) {
+      // ----------------------------------------------------
+      // Thousand Sunny Observation Room / Gym (Spherical Dome Crow's Nest)
+      // ----------------------------------------------------
+      const domeGeo = new THREE.SphereGeometry(0.72, 20, 16);
+      const domeMesh = new THREE.Mesh(domeGeo, this.hullMat);
+      domeMesh.position.y = height * 0.82;
+      mastGroup.add(domeMesh);
+
+      const domeCapGeo = new THREE.ConeGeometry(0.75, 0.42, 16);
+      const domeCap = new THREE.Mesh(domeCapGeo, this.paintRedMat);
+      domeCap.position.y = height * 0.82 + 0.65;
+      mastGroup.add(domeCap);
+
+      const windowRingGeo = new THREE.TorusGeometry(0.68, 0.045, 8, 24);
+      windowRingGeo.rotateX(Math.PI / 2);
+      const windowRing = new THREE.Mesh(windowRingGeo, this.goldMat);
+      windowRing.position.y = height * 0.82;
+      mastGroup.add(windowRing);
+    } else {
+      // Regular Crows Nest
+      const nestGeo = new THREE.CylinderGeometry(0.55, 0.46, 0.60, 12, 1, true);
+      const nestMesh = new THREE.Mesh(nestGeo, this.hullMat);
+      nestMesh.position.y = height * 0.80;
+      mastGroup.add(nestMesh);
+    }
 
     // Masthead Cap
     const capGeo = new THREE.CylinderGeometry(0.56, 0.56, 0.08, 12);
@@ -1048,132 +1239,77 @@ export class Ship {
     // Pirate Pennant Flag at Mast Top
     const flagGeo = new THREE.PlaneGeometry(1.25, 0.72);
     const flagMat = new THREE.MeshStandardMaterial({
-      color: 0x09090b,
-      roughness: 0.85,
+      color: 0xdc2626,
+      roughness: 0.6,
       side: THREE.DoubleSide
     });
     const flagMesh = new THREE.Mesh(flagGeo, flagMat);
-    flagMesh.position.set(0.65, height + 0.32, 0);
+    flagMesh.position.set(0.62, height + 0.25, 0);
     mastGroup.add(flagMesh);
 
-    // Main Billowing Square Sail
-    const sailGeo = new THREE.PlaneGeometry(yardWidth * 0.94, sailHeight, 28, 28);
-    const mat = hasJollyRoger ? this.jollyRogerSailMat : this.plainSailMat;
-    const sailMesh = new THREE.Mesh(sailGeo, mat);
-    sailMesh.position.set(0, height * 0.52, 0.25);
+    // Main Square Sail
+    const sailMat = hasJollyRoger ? this.jollyRogerSailMat : this.plainSailMat;
+    const sailGeo = new THREE.PlaneGeometry(yardWidth * 0.94, sailHeight, 14, 14);
+    const sailMesh = new THREE.Mesh(sailGeo, sailMat);
+    sailMesh.position.set(0, height * 0.48, 0.22);
     sailMesh.castShadow = true;
     mastGroup.add(sailMesh);
     this.sails.push(sailMesh);
 
     // Upper Topsail
-    const topSailGeo = new THREE.PlaneGeometry(yardWidth * 0.66, sailHeight * 0.56, 18, 18);
+    const topSailGeo = new THREE.PlaneGeometry(yardWidth * 0.66, sailHeight * 0.62, 10, 10);
     const topSailMesh = new THREE.Mesh(topSailGeo, this.plainSailMat);
-    topSailMesh.position.set(0, height * 0.88, 0.18);
+    topSailMesh.position.set(0, height * 0.85, 0.16);
+    topSailMesh.castShadow = true;
     mastGroup.add(topSailMesh);
     this.sails.push(topSailMesh);
 
     this.group.add(mastGroup);
   }
 
-  createShroudsWithRatlines(x1, y1, z1, x2, y2, z2) {
-    const shroudsGroup = new THREE.Group();
-
-    // 3 Main Vertical Shroud Ropes
-    const offsets = [-0.35, 0, 0.35];
-    offsets.forEach((offset) => {
-      const points = [
-        new THREE.Vector3(x1, y1, z1 + offset),
-        new THREE.Vector3(x2, y2, z2)
-      ];
-      const curveGeo = new THREE.BufferGeometry().setFromPoints(points);
-      const line = new THREE.Line(curveGeo, new THREE.LineBasicMaterial({ color: 0x3a2c20 }));
-      shroudsGroup.add(line);
-    });
-
-    // Horizontal Ratlines (Rope Ladders spaced vertically)
-    const stepCount = 14;
-    for (let i = 2; i < stepCount; i++) {
-      const t = i / stepCount;
-      const curY = y1 + (y2 - y1) * t;
-      const curX = x1 + (x2 - x1) * t;
-      const width = 0.70 * (1.0 - t * 0.75);
-
-      const rPoints = [
-        new THREE.Vector3(curX, curY, z1 - width / 2),
-        new THREE.Vector3(curX, curY, z1 + width / 2)
-      ];
-      const rGeo = new THREE.BufferGeometry().setFromPoints(rPoints);
-      const rLine = new THREE.Line(rGeo, new THREE.LineBasicMaterial({ color: 0x48382c }));
-      shroudsGroup.add(rLine);
-    }
-
-    this.group.add(shroudsGroup);
-  }
-
-  createRopeStay(x1, y1, z1, x2, y2, z2) {
-    const points = [new THREE.Vector3(x1, y1, z1), new THREE.Vector3(x2, y2, z2)];
-    const curveGeo = new THREE.BufferGeometry().setFromPoints(points);
-    const line = new THREE.Line(curveGeo, new THREE.LineBasicMaterial({ color: 0x443428, linewidth: 2 }));
-    this.group.add(line);
-  }
-
   createOrnateLantern(x, y, z) {
     const lanternGroup = new THREE.Group();
     lanternGroup.position.set(x, y, z);
 
+    // Bracket
+    const bracketGeo = new THREE.CylinderGeometry(0.025, 0.035, 0.42, 6);
+    bracketGeo.rotateX(Math.PI / 4);
+    const bracket = new THREE.Mesh(bracketGeo, this.goldMat);
+    lanternGroup.add(bracket);
+
+    // Cap & Base
     const capGeo = new THREE.ConeGeometry(0.18, 0.14, 6);
-    const topCap = new THREE.Mesh(capGeo, this.goldMat);
-    topCap.position.y = 0.22;
-    lanternGroup.add(topCap);
+    const cap = new THREE.Mesh(capGeo, this.goldMat);
+    cap.position.y = 0.26;
+    lanternGroup.add(cap);
 
-    const botCap = new THREE.Mesh(capGeo, this.goldMat);
-    botCap.rotation.x = Math.PI;
-    botCap.position.y = -0.22;
-    lanternGroup.add(botCap);
+    const baseGeo = new THREE.CylinderGeometry(0.12, 0.06, 0.08, 6);
+    const base = new THREE.Mesh(baseGeo, this.goldMat);
+    base.position.y = -0.22;
+    lanternGroup.add(base);
 
-    const cageGeo = new THREE.CylinderGeometry(0.15, 0.15, 0.36, 6, 1, true);
-    const cage = new THREE.Mesh(cageGeo, this.lanternCageMat);
-    lanternGroup.add(cage);
-
-    const glassGeo = new THREE.CylinderGeometry(0.13, 0.13, 0.32, 12);
+    // Amber Glass Core
+    const glassGeo = new THREE.CylinderGeometry(0.12, 0.10, 0.36, 6);
     const glass = new THREE.Mesh(glassGeo, this.glassMat);
     lanternGroup.add(glass);
 
-    const coreGeo = new THREE.SphereGeometry(0.07, 8, 8);
+    // Golden Wireframe Cage
+    const cageGeo = new THREE.CylinderGeometry(0.13, 0.11, 0.38, 6);
+    const cage = new THREE.Mesh(cageGeo, this.lanternCageMat);
+    lanternGroup.add(cage);
+
+    // Inner Glowing Core
+    const coreGeo = new THREE.SphereGeometry(0.045, 8, 8);
     const core = new THREE.Mesh(coreGeo, this.lanternCoreMat);
     lanternGroup.add(core);
 
-    const glowCanvas = document.createElement('canvas');
-    glowCanvas.width = 64;
-    glowCanvas.height = 64;
-    const ctx = glowCanvas.getContext('2d');
-    const grad = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
-    grad.addColorStop(0, 'rgba(255, 215, 100, 1.0)');
-    grad.addColorStop(0.3, 'rgba(251, 146, 60, 0.65)');
-    grad.addColorStop(0.7, 'rgba(217, 119, 6, 0.2)');
-    grad.addColorStop(1, 'rgba(0, 0, 0, 0.0)');
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, 64, 64);
-
-    const glowTexture = new THREE.CanvasTexture(glowCanvas);
-    glowTexture.needsUpdate = true;
-    const spriteMat = new THREE.SpriteMaterial({
-      map: glowTexture,
-      transparent: true,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false
-    });
-    const glowSprite = new THREE.Sprite(spriteMat);
-    glowSprite.scale.set(1.5, 1.5, 1.5);
-    lanternGroup.add(glowSprite);
-
+    // Point Light for Realistic Deck Illumination
     const pointLight = new THREE.PointLight(0xf59e0b, 2.2, 12, 1.8);
     lanternGroup.add(pointLight);
 
     this.lanterns.push({
       group: lanternGroup,
       light: pointLight,
-      sprite: glowSprite,
       baseIntensity: 2.2
     });
 
@@ -1183,51 +1319,50 @@ export class Ship {
   update(delta) {
     this.time += delta;
 
+    // Advance sail flutter with scroll velocity reactivity
+    const flutterFactor = Math.max(0.6, this.scrollOffset.sailFlutter || 1.0);
     if (this.jollyRogerSailMat?.uniforms?.uTime) {
-      this.jollyRogerSailMat.uniforms.uTime.value = this.time;
+      this.jollyRogerSailMat.uniforms.uTime.value += delta * flutterFactor;
     }
     if (this.plainSailMat?.uniforms?.uTime) {
-      this.plainSailMat.uniforms.uTime.value = this.time;
+      this.plainSailMat.uniforms.uTime.value += delta * flutterFactor;
     }
 
     // Lantern flame flicker
     this.lanterns.forEach((l, index) => {
       const flicker = Math.sin(this.time * 7.5 + index * 1.9) * 0.3 +
                       Math.cos(this.time * 13.0 + index * 2.7) * 0.18;
-      const currentIntensity = Math.max(0.8, l.baseIntensity + flicker);
-      l.light.intensity = currentIntensity;
-
-      const spriteScale = 1.35 + flicker * 0.16;
-      l.sprite.scale.set(spriteScale, spriteScale, spriteScale);
+      l.light.intensity = Math.max(0.8, l.baseIntensity + flicker);
     });
 
-    // Buoyancy Wave Physics with natural water immersion
+    // Buoyancy Wave Physics with natural water immersion and scroll progression
     const ocean = this.experience.world?.ocean;
     if (ocean) {
-      const shipX = this.baseX;
-      const shipZ = this.baseZ;
+      const currentBaseX = this.baseX + this.scrollOffset.x;
+      const currentBaseZ = this.baseZ + this.scrollOffset.z;
 
-      const bowY = ocean.getWaveHeight(shipX, shipZ + 4.2, this.time);
-      const sternY = ocean.getWaveHeight(shipX, shipZ - 4.2, this.time);
-      const centerY = ocean.getWaveHeight(shipX, shipZ, this.time);
+      const bowY = ocean.getWaveHeight(currentBaseX, currentBaseZ + 4.2, this.time);
+      const sternY = ocean.getWaveHeight(currentBaseX, currentBaseZ - 4.2, this.time);
+      const centerY = ocean.getWaveHeight(currentBaseX, currentBaseZ, this.time);
 
-      const portY = ocean.getWaveHeight(shipX - 1.8, shipZ, this.time);
-      const stbdY = ocean.getWaveHeight(shipX + 1.8, shipZ, this.time);
+      const portY = ocean.getWaveHeight(currentBaseX - 1.8, currentBaseZ, this.time);
+      const stbdY = ocean.getWaveHeight(currentBaseX + 1.8, currentBaseZ, this.time);
 
       // Deep draft so the hull stays naturally immersed in the water
-      this.targetY = this.draftOffset + centerY * 0.85;
-      this.targetPitch = (bowY - sternY) * 0.082;
-      this.targetRoll = (portY - stbdY) * 0.125;
+      this.targetY = this.draftOffset + this.scrollOffset.y + centerY * 0.85;
+      this.targetPitch = (bowY - sternY) * 0.082 + this.scrollOffset.pitch;
+      this.targetRoll = (portY - stbdY) * 0.125 + this.scrollOffset.roll;
 
-      this.group.position.x = this.baseX;
-      this.group.position.z = this.baseZ;
+      this.group.position.x = lerp(this.group.position.x, currentBaseX, 0.08);
+      this.group.position.z = lerp(this.group.position.z, currentBaseZ, 0.08);
       this.group.position.y = lerp(this.group.position.y, this.targetY, 0.08);
 
       this.group.rotation.x = lerp(this.group.rotation.x, this.targetPitch, 0.065);
       this.group.rotation.z = lerp(this.group.rotation.z, this.targetRoll, 0.065);
 
-      // Gentle yaw sway
-      this.group.rotation.y = this.baseRotationY + Math.sin(this.time * 0.32) * 0.035;
+      // Gentle yaw sway + scroll steering
+      const dynamicYaw = this.baseRotationY + this.scrollOffset.rotationY + Math.sin(this.time * 0.32) * 0.035;
+      this.group.rotation.y = lerp(this.group.rotation.y, dynamicYaw, 0.065);
     }
   }
 }

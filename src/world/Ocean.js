@@ -20,6 +20,7 @@ export class Ocean {
     this.material = new THREE.ShaderMaterial({
       vertexShader: `
         uniform float uTime;
+        uniform float uWaveIntensity;
         
         varying vec3 vWorldPosition;
         varying vec3 vNormal;
@@ -29,7 +30,7 @@ export class Ocean {
 
         // 4-Wave Gerstner Wave Formula
         vec3 gerstnerWave(vec4 wave, vec3 p, inout vec3 tangent, inout vec3 binormal, inout float steepnessAcc) {
-          float steepness = wave.z;
+          float steepness = wave.z * uWaveIntensity;
           float wavelength = wave.w;
           float k = 2.0 * 3.14159265 / wavelength;
           float c = sqrt(9.8 / k);
@@ -89,6 +90,7 @@ export class Ocean {
       `,
       fragmentShader: `
         uniform float uTime;
+        uniform float uGoldenHour;
         uniform vec3 uDepthColor;
         uniform vec3 uMidColor;
         uniform vec3 uSurfaceColor;
@@ -140,60 +142,72 @@ export class Ocean {
           float n2 = fbm(rippleCoord * 2.2 - vec2(uTime * 0.06));
           vec3 perturbedNormal = normalize(vNormal + vec3((n1 - 0.5) * 0.12, 0.0, (n2 - 0.5) * 0.12));
 
-          // Physical Schlick Fresnel
+          // Physical Schlick Fresnel (damped so water depth stays visible)
           float nDotV = max(dot(viewDir, perturbedNormal), 0.0);
           float f0 = 0.024;
           float fresnel = f0 + (1.0 - f0) * pow(1.0 - nDotV, 5.0);
 
-          // Tropical Daytime Depth Grading (Deep Cerulean -> Clear Azure -> Sunlit Turquoise)
-          vec3 waterBody = mix(uDepthColor, uMidColor, smoothstep(-1.8, 0.3, vWaveHeight));
-          waterBody = mix(waterBody, uSurfaceColor, smoothstep(0.1, 1.6, vWaveHeight));
+          // Dynamic Golden Hour Color Grading
+          vec3 depthCol = mix(uDepthColor, vec3(0.06, 0.18, 0.38), uGoldenHour);
+          vec3 midCol = mix(uMidColor, vec3(0.10, 0.38, 0.58), uGoldenHour);
+          vec3 surfaceCol = mix(uSurfaceColor, vec3(0.92, 0.65, 0.22), uGoldenHour * 0.65);
+          vec3 sssBaseCol = mix(uSubsurfaceColor, vec3(0.96, 0.78, 0.32), uGoldenHour * 0.75);
+          vec3 sunCol = mix(uSunColor, vec3(1.0, 0.88, 0.62), uGoldenHour);
+
+          // Tropical Depth Grading (Deep Cerulean -> Clear Azure -> Sunlit Turquoise/Amber)
+          vec3 waterBody = mix(depthCol, midCol, smoothstep(-1.8, 0.3, vWaveHeight));
+          waterBody = mix(waterBody, surfaceCol, smoothstep(0.1, 1.6, vWaveHeight));
 
           // Subsurface Scattering (SSS) through wave crests facing sunlight
-          float sssFactor = max(0.0, dot(viewDir, -lightDir)) * smoothstep(0.3, 1.6, vWaveHeight);
-          vec3 sssColor = uSubsurfaceColor * (sssFactor * 0.75);
+          float sssFactor = max(0.0, dot(viewDir, -lightDir)) * smoothstep(0.4, 1.6, vWaveHeight);
+          vec3 sssColor = sssBaseCol * (sssFactor * 0.75);
 
-          // Brilliant Daytime Sun Specular Highlight
+          // Brilliant Sun Specular Highlight
           vec3 halfVector = normalize(lightDir + viewDir);
           float nDotH = max(dot(perturbedNormal, halfVector), 0.0);
-          float sunSpecularSharp = pow(nDotH, 160.0) * 3.2;
-          float sunSpecularBroad = pow(nDotH, 20.0) * 0.45;
-          vec3 specularHighlight = (sunSpecularSharp + sunSpecularBroad) * uSunColor;
+          float sunSpecularSharp = pow(nDotH, 160.0) * (2.8 + uGoldenHour * 1.2);
+          float sunSpecularBroad = pow(nDotH, 20.0) * (0.35 + uGoldenHour * 0.25);
+          vec3 specularHighlight = (sunSpecularSharp + sunSpecularBroad) * sunCol;
 
-          // Sky Reflection (Bright tropical blue sky)
-          vec3 skyReflection = mix(vec3(0.55, 0.82, 0.98), vec3(0.85, 0.95, 1.0), pow(1.0 - nDotV, 2.0));
+          // Sky Reflection (Bright tropical blue sky -> warm sunset gold)
+          vec3 skyDay = mix(vec3(0.28, 0.58, 0.88), vec3(0.55, 0.78, 0.95), pow(1.0 - nDotV, 2.0));
+          vec3 skySunset = mix(vec3(0.92, 0.62, 0.38), vec3(0.98, 0.88, 0.72), pow(1.0 - nDotV, 2.0));
+          vec3 skyReflection = mix(skyDay, skySunset, uGoldenHour);
 
-          // Composite Base Ocean
-          vec3 baseColor = mix(waterBody + sssColor, skyReflection, fresnel * 0.65) + specularHighlight;
+          // Composite Base Ocean (Controlled fresnel prevents white wash-out)
+          vec3 baseColor = mix(waterBody + sssColor, skyReflection, fresnel * 0.42) + specularHighlight;
 
-          // Crisp White Organic Seafoam on wave crests
-          float crestMask = smoothstep(0.9, 1.6, vWaveHeight + vSteepnessSum * 0.35);
+          // Crisp White Organic Seafoam strictly on the highest wave crests
+          float crestMask = smoothstep(1.15, 1.75, vWaveHeight + vSteepnessSum * 0.25);
           float foamNoise = fbm(vWorldPosition.xz * 3.8 + vec2(uTime * 0.16));
-          float foamPattern = smoothstep(0.48, 0.75, foamNoise) * crestMask;
+          float foamPattern = smoothstep(0.52, 0.78, foamNoise) * crestMask;
 
-          vec3 colorWithFoam = mix(baseColor, uFoamColor, foamPattern * 0.82);
+          vec3 colorWithFoam = mix(baseColor, uFoamColor, foamPattern * 0.75);
 
-          // Soft Daylight Sea Mist
+          // Daylight -> Golden Sunset Atmospheric Sea Mist
           float dist = length(cameraPosition - vWorldPosition);
-          float distanceFog = 1.0 - exp(-dist * dist * 0.000045);
-          float heightFog = exp(-vWorldPosition.y * 0.25) * 0.15;
-          float totalFog = clamp(distanceFog + heightFog, 0.0, 1.0);
+          float distanceFog = 1.0 - exp(-dist * dist * 0.000028);
+          float heightFog = exp(-max(0.0, vWorldPosition.y) * 0.25) * 0.05;
+          float totalFog = clamp(distanceFog + heightFog, 0.0, 0.70);
 
-          vec3 finalColor = mix(colorWithFoam, uFogColor, totalFog);
+          vec3 fogCol = mix(uFogColor, vec3(0.98, 0.92, 0.80), uGoldenHour);
+          vec3 finalColor = mix(colorWithFoam, fogCol, totalFog);
 
           gl_FragColor = vec4(finalColor, 1.0);
         }
       `,
       uniforms: {
         uTime: { value: 0 },
-        uDepthColor: { value: new THREE.Color('#0369a1') },       // Deep cerulean
-        uMidColor: { value: new THREE.Color('#0284c7') },         // Rich crystal ocean blue
-        uSurfaceColor: { value: new THREE.Color('#38bdf8') },     // Sunlit tropical turquoise
-        uSubsurfaceColor: { value: new THREE.Color('#2dd4bf') },  // Emerald green SSS
-        uFoamColor: { value: new THREE.Color('#ffffff') },        // Crisp brilliant white seafoam
+        uWaveIntensity: { value: 1.0 },
+        uGoldenHour: { value: 0.0 },
+        uDepthColor: { value: new THREE.Color('#023e8a') },       // Deep rich sapphire
+        uMidColor: { value: new THREE.Color('#0077b6') },         // Vibrant ocean azure
+        uSurfaceColor: { value: new THREE.Color('#00b4d8') },     // Clear sunlit turquoise
+        uSubsurfaceColor: { value: new THREE.Color('#2ec4b6') },  // Emerald green SSS
+        uFoamColor: { value: new THREE.Color('#ffffff') },        // Crisp white foam
         uSunDirection: { value: new THREE.Vector3(25, 55, -25) },
         uSunColor: { value: new THREE.Color('#fffbeb') },
-        uFogColor: { value: new THREE.Color('#e0f2fe') }          // Soft daylight azure mist
+        uFogColor: { value: new THREE.Color('#e0f2fe') }          // Soft azure mist
       },
       wireframe: false,
       transparent: false
@@ -207,24 +221,37 @@ export class Ocean {
     this.scene.add(this.mesh);
   }
 
+  setGoldenHour(factor) {
+    if (this.material?.uniforms?.uGoldenHour) {
+      this.material.uniforms.uGoldenHour.value = factor;
+    }
+  }
+
+  setWaveIntensity(factor) {
+    if (this.material?.uniforms?.uWaveIntensity) {
+      this.material.uniforms.uWaveIntensity.value = factor;
+    }
+  }
+
   getWaveHeight(x, z, time) {
+    const intensity = this.material?.uniforms?.uWaveIntensity?.value || 1.0;
     const w1_dir = new THREE.Vector2(1.0, 0.35).normalize();
     const w1_k = (2.0 * Math.PI) / 24.0;
     const w1_c = Math.sqrt(9.8 / w1_k);
     const w1_f = w1_k * (w1_dir.x * x + w1_dir.y * z - w1_c * time * 0.45);
-    const w1_a = 0.26 / w1_k;
+    const w1_a = (0.26 * intensity) / w1_k;
 
     const w2_dir = new THREE.Vector2(0.4, 0.9).normalize();
     const w2_k = (2.0 * Math.PI) / 14.0;
     const w2_c = Math.sqrt(9.8 / w2_k);
     const w2_f = w2_k * (w2_dir.x * x + w2_dir.y * z - w2_c * time * 0.45);
-    const w2_a = 0.20 / w2_k;
+    const w2_a = (0.20 * intensity) / w2_k;
 
     const w3_dir = new THREE.Vector2(-0.5, 0.6).normalize();
     const w3_k = (2.0 * Math.PI) / 8.0;
     const w3_c = Math.sqrt(9.8 / w3_k);
     const w3_f = w3_k * (w3_dir.x * x + w3_dir.y * z - w3_c * time * 0.45);
-    const w3_a = 0.14 / w3_k;
+    const w3_a = (0.14 * intensity) / w3_k;
 
     return w1_a * Math.sin(w1_f) + w2_a * Math.sin(w2_f) + w3_a * Math.sin(w3_f);
   }

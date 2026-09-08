@@ -7,14 +7,20 @@ export class Camera {
     this.sizes = experience.sizes;
     this.scene = experience.scene;
 
-    // Cinematic Editorial Staging:
-    // Frames the magnificent tall ship on the right (golden ratio)
-    // leaving the left 45% open for the typography and CTA buttons.
+    // Base cinematic editorial staging
+    this.baseTargetPosition = new THREE.Vector3(-1.8, 3.6, 17.8);
+    this.baseTargetLookAt = new THREE.Vector3(0.6, 2.3, 0.4);
+
+    // Scroll-driven offsets (driven by GSAP ScrollTrigger)
+    this.scrollTargetPosition = new THREE.Vector3(0, 0, 0);
+    this.scrollTargetLookAt = new THREE.Vector3(0, 0, 0);
+    this.scrollFovOffset = 0;
+
+    // Combined target vectors
     this.targetPosition = new THREE.Vector3(-1.8, 3.6, 17.8);
     this.targetLookAt = new THREE.Vector3(0.6, 2.3, 0.4);
     this.currentLookAt = new THREE.Vector3(0.6, 2.3, 0.4);
 
-    // Responsive position cache
     this.updateBaseTargetForScreen();
     this.currentLookAt.copy(this.targetLookAt);
 
@@ -22,6 +28,7 @@ export class Camera {
     this.mouse = { x: 0, y: 0 };
     this.parallax = { x: 0, y: 0 };
 
+    this.baseFov = 36;
     this.setInstance();
     this.initMouseEvents();
   }
@@ -30,29 +37,29 @@ export class Camera {
     const aspect = this.sizes.width / this.sizes.height;
     if (aspect < 1.0) {
       // Portrait / Mobile view: pull camera back and center slightly
-      this.targetPosition.set(0.0, 4.0, 22.0);
-      this.targetLookAt.set(1.2, 2.2, 0.4);
+      this.baseTargetPosition.set(0.0, 4.0, 22.0);
+      this.baseTargetLookAt.set(1.2, 2.2, 0.4);
     } else if (aspect < 1.4) {
       // Tablet / Square view
-      this.targetPosition.set(-0.6, 3.8, 19.5);
-      this.targetLookAt.set(1.0, 2.3, 0.4);
+      this.baseTargetPosition.set(-0.6, 3.8, 19.5);
+      this.baseTargetLookAt.set(1.0, 2.3, 0.4);
     } else {
       // Desktop widescreen: cinematic golden-ratio staging framing the ship on the right
-      this.targetPosition.set(-1.8, 3.6, 17.8);
-      this.targetLookAt.set(0.6, 2.3, 0.4);
+      this.baseTargetPosition.set(-1.8, 3.6, 17.8);
+      this.baseTargetLookAt.set(0.6, 2.3, 0.4);
     }
   }
 
   setInstance() {
-    // Cinematic focal length (~60mm equivalent): compresses perspective, keeps ship majestic and eliminates wide-angle distortion
+    // Cinematic focal length (~60mm equivalent)
     this.instance = new THREE.PerspectiveCamera(
-      36,
+      this.baseFov,
       this.sizes.width / this.sizes.height,
       0.1,
       1000
     );
-    this.instance.position.copy(this.targetPosition);
-    this.instance.lookAt(this.targetLookAt);
+    this.instance.position.copy(this.baseTargetPosition);
+    this.instance.lookAt(this.baseTargetLookAt);
     this.scene.add(this.instance);
   }
 
@@ -72,7 +79,17 @@ export class Camera {
   update() {
     const time = performance.now() * 0.001;
 
-    // 1. Subtle, organic harmonic ocean floating motion
+    // Combine base target + scroll offsets
+    this.targetPosition.copy(this.baseTargetPosition).add(this.scrollTargetPosition);
+    this.targetLookAt.copy(this.baseTargetLookAt).add(this.scrollTargetLookAt);
+
+    // Dynamic FOV breathing
+    if (this.instance.fov !== this.baseFov + this.scrollFovOffset) {
+      this.instance.fov = lerp(this.instance.fov, this.baseFov + this.scrollFovOffset, 0.05);
+      this.instance.updateProjectionMatrix();
+    }
+
+    // 1. Organic harmonic ocean floating motion
     const floatX = Math.sin(time * 0.38) * 0.15;
     const floatY = Math.sin(time * 0.58) * 0.12 + Math.cos(time * 0.28) * 0.06;
     const floatZ = Math.cos(time * 0.34) * 0.10;
@@ -85,14 +102,14 @@ export class Camera {
     this.parallax.y = lerp(this.parallax.y, this.mouse.y * 0.42, 0.035);
 
     // 3. Apply position
-    this.instance.position.x = this.targetPosition.x + this.parallax.x + floatX;
-    this.instance.position.y = this.targetPosition.y + this.parallax.y + floatY;
-    this.instance.position.z = this.targetPosition.z + floatZ;
+    this.instance.position.x = lerp(this.instance.position.x, this.targetPosition.x + this.parallax.x + floatX, 0.065);
+    this.instance.position.y = lerp(this.instance.position.y, this.targetPosition.y + this.parallax.y + floatY, 0.065);
+    this.instance.position.z = lerp(this.instance.position.z, this.targetPosition.z + floatZ, 0.065);
 
     // 4. Smooth camera focus tracking
-    this.currentLookAt.x = lerp(this.currentLookAt.x, this.targetLookAt.x + this.parallax.x * 0.22 + lookFloatX, 0.05);
-    this.currentLookAt.y = lerp(this.currentLookAt.y, this.targetLookAt.y + this.parallax.y * 0.18 + lookFloatY, 0.05);
-    this.currentLookAt.z = lerp(this.currentLookAt.z, this.targetLookAt.z, 0.05);
+    this.currentLookAt.x = lerp(this.currentLookAt.x, this.targetLookAt.x + this.parallax.x * 0.22 + lookFloatX, 0.055);
+    this.currentLookAt.y = lerp(this.currentLookAt.y, this.targetLookAt.y + this.parallax.y * 0.18 + lookFloatY, 0.055);
+    this.currentLookAt.z = lerp(this.currentLookAt.z, this.targetLookAt.z, 0.055);
 
     this.instance.lookAt(this.currentLookAt);
   }

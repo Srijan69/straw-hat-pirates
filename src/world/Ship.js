@@ -47,28 +47,34 @@ export class Ship {
     this.lawnTexture = this.createLawnTexture();
     this.stonePaverTexture = this.createStonePaverTexture();
 
-    // Hull Upper Material (Rich Varnished Sunny Teak)
+    // ====================================================
+    // ANIME-ACCURATE THOUSAND SUNNY COLOR SCHEME
+    // Upper hull: warm cream/white (like the anime)
+    // Lower hull: bright crimson red
+    // ====================================================
+
+    // Hull Upper Material — Warm Cream/White (Anime Thousand Sunny)
     this.hullMat = new THREE.MeshStandardMaterial({
-      map: this.woodPlankTexture,
-      roughness: 0.46,
-      metalness: 0.08
+      color: 0xfaf5eb,
+      roughness: 0.52,
+      metalness: 0.04
     });
 
-    // Hull Lower Waterline Material (Submerged Naval Anti-Fouling Dark Copper)
+    // Hull Lower Waterline Material — Bright Crimson Red (Anime Accurate)
     this.lowerHullMat = new THREE.MeshStandardMaterial({
-      color: 0x241812,
-      roughness: 0.72,
-      metalness: 0.18
+      color: 0xb91c1c,
+      roughness: 0.45,
+      metalness: 0.10
     });
 
-    // Dark Teak Accent Wales, Trim, Capstans & Mast Spars
+    // Warm Brown Wood for Mast Spars, Trim & Capstans
     this.darkWoodMat = new THREE.MeshStandardMaterial({
-      color: 0x20140e,
+      color: 0x5c3a1e,
       roughness: 0.65,
       metalness: 0.04
     });
 
-    // Deck Flooring Material
+    // Deck Flooring Material (warm honey wood)
     this.deckMat = new THREE.MeshStandardMaterial({
       map: this.deckPlankTexture,
       roughness: 0.62,
@@ -556,7 +562,8 @@ export class Ship {
 
   buildShipModel() {
     // ----------------------------------------------------
-    // 1. Thousand Sunny Master Hull Architecture
+    // 1. Thousand Sunny Master Hull Architecture (Anime-Accurate)
+    // Upper hull: warm cream/white | Lower hull: bright red
     // ----------------------------------------------------
     const hullGeometry = new THREE.BoxGeometry(3.2, 2.4, 9.6, 6, 4, 16);
     const pos = hullGeometry.attributes.position;
@@ -569,14 +576,14 @@ export class Ship {
       if (vertex.z > 1.0) {
         const bowTaper = Math.max(0.12, 1.0 - ((vertex.z - 1.0) / 3.8) * 0.72);
         vertex.x *= bowTaper;
-        vertex.y += (vertex.z - 1.0) * 0.16; // Forecastle sheer lift
+        vertex.y += (vertex.z - 1.0) * 0.16;
       }
 
       // Ship Poop Deck (Stern rounding)
       if (vertex.z < -1.0) {
         const sternTaper = Math.max(0.35, 1.0 - (Math.abs(vertex.z + 1.0) / 3.8) * 0.28);
         vertex.x *= sternTaper;
-        vertex.y += Math.abs(vertex.z + 1.0) * 0.24; // High poop deck sheer
+        vertex.y += Math.abs(vertex.z + 1.0) * 0.24;
       }
 
       // Tumblehome & Rounded Bottom
@@ -589,20 +596,55 @@ export class Ship {
     }
     hullGeometry.computeVertexNormals();
 
+    // White/cream upper hull (anime-accurate)
     const hullMesh = new THREE.Mesh(hullGeometry, this.hullMat);
     hullMesh.position.y = 1.08;
     hullMesh.castShadow = true;
     hullMesh.receiveShadow = true;
     this.group.add(hullMesh);
 
-    // Waterline Lower Keel
-    const lowerHullGeo = new THREE.CylinderGeometry(0.38, 0.14, 9.6, 12);
-    lowerHullGeo.rotateX(Math.PI / 2);
+    // ---- BRIGHT RED Lower Hull Band (anime Thousand Sunny signature) ----
+    // Wide red keel/bottom section visible above waterline
+    const lowerHullGeo = new THREE.BoxGeometry(3.1, 0.65, 9.4, 4, 2, 12);
+    const lhPos = lowerHullGeo.attributes.position;
+    const lhV = new THREE.Vector3();
+    for (let i = 0; i < lhPos.count; i++) {
+      lhV.fromBufferAttribute(lhPos, i);
+      // Taper bow
+      if (lhV.z > 1.0) {
+        const t = Math.max(0.15, 1.0 - ((lhV.z - 1.0) / 3.8) * 0.72);
+        lhV.x *= t;
+      }
+      // Taper stern
+      if (lhV.z < -1.0) {
+        const t = Math.max(0.35, 1.0 - (Math.abs(lhV.z + 1.0) / 3.8) * 0.28);
+        lhV.x *= t;
+      }
+      // Round bottom
+      if (lhV.y < 0) {
+        lhV.x *= Math.max(0.25, 1.0 + (lhV.y / 0.4) * 0.55);
+      }
+      lhPos.setXYZ(i, lhV.x, lhV.y, lhV.z);
+    }
+    lowerHullGeo.computeVertexNormals();
     const lowerHull = new THREE.Mesh(lowerHullGeo, this.lowerHullMat);
-    lowerHull.position.y = 0.08;
+    lowerHull.position.y = 0.10;
     this.group.add(lowerHull);
 
-    // Gilded Gunwale Railing Capping
+    // Keel strip (dark underside)
+    const keelGeo = new THREE.CylinderGeometry(0.28, 0.10, 9.4, 10);
+    keelGeo.rotateX(Math.PI / 2);
+    const keel = new THREE.Mesh(keelGeo, new THREE.MeshStandardMaterial({ color: 0x3b1a0a, roughness: 0.7, metalness: 0.1 }));
+    keel.position.y = -0.22;
+    this.group.add(keel);
+
+    // Gold waterline stripe between cream and red hull sections
+    const wlStripeGeo = new THREE.BoxGeometry(3.22, 0.10, 9.5, 2, 1, 12);
+    const wlStripe = new THREE.Mesh(wlStripeGeo, this.goldMat);
+    wlStripe.position.y = 0.44;
+    this.group.add(wlStripe);
+
+    // Gilded Gunwale Railing Capping (top of hull)
     const railGeo = new THREE.BoxGeometry(3.32, 0.20, 10.0);
     const railMesh = new THREE.Mesh(railGeo, this.goldMat);
     railMesh.position.y = 2.26;
@@ -699,98 +741,112 @@ export class Ship {
     // 7. Authentic Thousand Sunny Lion Figurehead (King of Beasts)
     // ----------------------------------------------------
     const figureheadGroup = new THREE.Group();
-    figureheadGroup.position.set(0, 2.65, 5.05);
+    figureheadGroup.position.set(0, 2.45, 5.25);
+    figureheadGroup.scale.set(1.35, 1.35, 1.35); // Larger, more prominent like anime
 
-    // Sculpted Golden Lion Head
-    const headGeo = new THREE.SphereGeometry(0.68, 24, 24);
+    // Sculpted Golden Lion Head — large & cheerful like anime Sunny
+    const headGeo = new THREE.SphereGeometry(0.78, 28, 28);
     const headMesh = new THREE.Mesh(headGeo, this.goldMat);
     figureheadGroup.add(headMesh);
 
-    // Lion Muzzle & Open Smiling Mouth
-    const muzzleGeo = new THREE.CylinderGeometry(0.26, 0.34, 0.40, 16);
+    // Lion Muzzle & Open Smiling Mouth (wider, friendlier)
+    const muzzleGeo = new THREE.CylinderGeometry(0.32, 0.42, 0.42, 18);
     muzzleGeo.rotateX(Math.PI / 2);
     const muzzleMesh = new THREE.Mesh(muzzleGeo, this.goldMat);
-    muzzleMesh.position.set(0, -0.08, 0.42);
+    muzzleMesh.position.set(0, -0.12, 0.50);
     figureheadGroup.add(muzzleMesh);
 
+    // Lower jaw / chin (rounder, friendlier looking)
+    const chinGeo = new THREE.SphereGeometry(0.30, 16, 12, 0, Math.PI * 2, Math.PI * 0.5, Math.PI * 0.5);
+    const chinMesh = new THREE.Mesh(chinGeo, this.goldMat);
+    chinMesh.position.set(0, -0.28, 0.48);
+    figureheadGroup.add(chinMesh);
+
     // Gaon Cannon Barrel inside Mouth (The Sunny's Ultimate Superweapon)
-    const gaonGeo = new THREE.CylinderGeometry(0.13, 0.13, 0.36, 16);
+    const gaonGeo = new THREE.CylinderGeometry(0.15, 0.15, 0.38, 16);
     gaonGeo.rotateX(Math.PI / 2);
     const gaonMesh = new THREE.Mesh(gaonGeo, this.ironMat);
-    gaonMesh.position.set(0, -0.08, 0.50);
+    gaonMesh.position.set(0, -0.12, 0.58);
     figureheadGroup.add(gaonMesh);
 
-    const gaonMuzzleRingGeo = new THREE.TorusGeometry(0.14, 0.025, 8, 16);
+    const gaonMuzzleRingGeo = new THREE.TorusGeometry(0.16, 0.028, 8, 18);
     const gaonMuzzleRing = new THREE.Mesh(gaonMuzzleRingGeo, this.goldMat);
-    gaonMuzzleRing.position.set(0, -0.08, 0.68);
+    gaonMuzzleRing.position.set(0, -0.12, 0.76);
     figureheadGroup.add(gaonMuzzleRing);
 
-    // Cute Lion Nose
-    const noseGeo = new THREE.SphereGeometry(0.08, 12, 12);
+    // Cute Lion Nose (round & red, anime style)
+    const noseGeo = new THREE.SphereGeometry(0.10, 14, 14);
     const noseMesh = new THREE.Mesh(noseGeo, this.paintRedMat);
-    noseMesh.position.set(0, 0.06, 0.65);
+    noseMesh.position.set(0, 0.08, 0.74);
     figureheadGroup.add(noseMesh);
 
     // Layered Muzzle Plate & Whiskers
     [-1, 1].forEach((side) => {
-      const whiskerGeo = new THREE.CylinderGeometry(0.018, 0.018, 0.52, 6);
+      const whiskerGeo = new THREE.CylinderGeometry(0.020, 0.020, 0.60, 6);
       const whisker = new THREE.Mesh(whiskerGeo, this.goldMat);
-      whisker.position.set(side * 0.34, -0.02, 0.5);
-      whisker.rotation.z = side * 0.24;
+      whisker.position.set(side * 0.40, -0.04, 0.56);
+      whisker.rotation.z = side * 0.22;
       whisker.rotation.x = Math.PI / 2;
       figureheadGroup.add(whisker);
     });
 
-    // Stylized Dark Eyes for Lion Face
-    [-0.22, 0.22].forEach((eyeX) => {
-      const eyeGeo = new THREE.SphereGeometry(0.068, 12, 12);
-      const eyeMat = new THREE.MeshBasicMaterial({ color: 0x18181b });
-      const eye = new THREE.Mesh(eyeGeo, eyeMat);
-      eye.position.set(eyeX, 0.18, 0.60);
-      figureheadGroup.add(eye);
+    // Big Cheerful Eyes (anime style — large white sclera with black pupils)
+    [-0.26, 0.26].forEach((eyeX) => {
+      // White sclera
+      const scleraGeo = new THREE.SphereGeometry(0.12, 14, 14);
+      const scleraMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+      const sclera = new THREE.Mesh(scleraGeo, scleraMat);
+      sclera.position.set(eyeX, 0.22, 0.68);
+      figureheadGroup.add(sclera);
+      // Black pupil
+      const pupilGeo = new THREE.SphereGeometry(0.06, 12, 12);
+      const pupilMat = new THREE.MeshBasicMaterial({ color: 0x0a0a0a });
+      const pupil = new THREE.Mesh(pupilGeo, pupilMat);
+      pupil.position.set(eyeX, 0.22, 0.78);
+      figureheadGroup.add(pupil);
     });
 
-    // Two Golden Lion Ears
-    [-0.38, 0.38].forEach((earX) => {
-      const earGeo = new THREE.ConeGeometry(0.16, 0.32, 10);
+    // Two Golden Lion Ears (bigger, rounder)
+    [-0.46, 0.46].forEach((earX) => {
+      const earGeo = new THREE.SphereGeometry(0.18, 12, 12);
       const earMesh = new THREE.Mesh(earGeo, this.goldMat);
-      earMesh.position.set(earX, 0.54, 0.12);
-      earMesh.rotation.z = -earX * 0.9;
+      earMesh.position.set(earX, 0.62, 0.10);
       figureheadGroup.add(earMesh);
     });
 
     // Pure White Crossbones mounted behind the head
     [-1, 1].forEach((dir) => {
-      const boneGeo = new THREE.CylinderGeometry(0.065, 0.065, 1.85, 8);
+      const boneGeo = new THREE.CylinderGeometry(0.07, 0.07, 2.0, 8);
       const bone = new THREE.Mesh(boneGeo, this.boneMat);
-      bone.position.set(0, 0, -0.15);
+      bone.position.set(0, 0, -0.18);
       bone.rotation.z = dir * Math.PI / 4;
       figureheadGroup.add(bone);
 
       // Bone Knobs
-      [-0.92, 0.92].forEach((bp) => {
-        const knobGeo = new THREE.SphereGeometry(0.11, 8, 8);
+      [-1.0, 1.0].forEach((bp) => {
+        const knobGeo = new THREE.SphereGeometry(0.12, 8, 8);
         const knob1 = new THREE.Mesh(knobGeo, this.boneMat);
-        knob1.position.set(bp * Math.cos(dir * Math.PI / 4) + 0.05, bp * Math.sin(dir * Math.PI / 4) + 0.05, -0.15);
+        knob1.position.set(bp * Math.cos(dir * Math.PI / 4), bp * Math.sin(dir * Math.PI / 4), -0.18);
         figureheadGroup.add(knob1);
       });
     });
 
-    // 16 Radiating Sunflower Petals (Authentic Thousand Sunny Mane)
+    // 16 Radiating Sunflower Petals (Authentic Thousand Sunny Mane — bigger & bolder)
     const petalCount = 16;
     for (let i = 0; i < petalCount; i++) {
       const angle = (i / petalCount) * Math.PI * 2;
-      const petalGeo = new THREE.ConeGeometry(0.18, 0.88, 10);
+      // Wider, more petal-shaped
+      const petalGeo = new THREE.ConeGeometry(0.22, 1.05, 10);
       const petalMesh = new THREE.Mesh(petalGeo, this.goldMat);
-      petalMesh.position.set(Math.cos(angle) * 0.82, Math.sin(angle) * 0.82, -0.10);
+      petalMesh.position.set(Math.cos(angle) * 0.95, Math.sin(angle) * 0.95, -0.12);
       petalMesh.rotation.z = angle - Math.PI / 2;
       petalMesh.rotation.x = Math.PI / 2;
       figureheadGroup.add(petalMesh);
     }
 
-    const maneRingGeo = new THREE.TorusGeometry(0.82, 0.07, 10, 32);
+    const maneRingGeo = new THREE.TorusGeometry(0.95, 0.08, 12, 36);
     const maneRing = new THREE.Mesh(maneRingGeo, this.goldMat);
-    maneRing.position.z = -0.12;
+    maneRing.position.z = -0.14;
     figureheadGroup.add(maneRing);
 
     this.group.add(figureheadGroup);
@@ -837,12 +893,18 @@ export class Ship {
   }
 
   createHullDetail() {
-    // Gold sheer stripe follows the visible profile
-    const stripeGeo = new THREE.BoxGeometry(3.30, 0.11, 9.25, 2, 1, 12);
+    // Gold sheer stripe between upper white hull and mid section
+    const stripeGeo = new THREE.BoxGeometry(3.30, 0.12, 9.25, 2, 1, 12);
     const stripe = new THREE.Mesh(stripeGeo, this.goldMat);
-    stripe.position.y = 1.42;
+    stripe.position.y = 1.60;
     stripe.castShadow = true;
     this.group.add(stripe);
+
+    // Second gold accent stripe lower on hull
+    const stripe2Geo = new THREE.BoxGeometry(3.28, 0.08, 9.20, 2, 1, 12);
+    const stripe2 = new THREE.Mesh(stripe2Geo, this.goldMat);
+    stripe2.position.y = 0.94;
+    this.group.add(stripe2);
 
     // Framed portholes
     const portholeRingGeo = new THREE.TorusGeometry(0.16, 0.035, 8, 16);
@@ -882,25 +944,63 @@ export class Ship {
     });
 
     // ----------------------------------------------------
-    // Soldier Dock System Dials (Channels 0–6)
+    // Soldier Dock System (Anime-Accurate — Large Circular Paddle Wheels)
+    // These are the signature circular side features of the Thousand Sunny
     // ----------------------------------------------------
     [-1, 1].forEach((side) => {
-      const dockDialGeo = new THREE.CylinderGeometry(0.48, 0.48, 0.12, 24);
+      // Large outer red casing (the big red circles seen in the anime)
+      const dockCasingGeo = new THREE.CylinderGeometry(0.95, 0.95, 0.20, 32);
+      dockCasingGeo.rotateZ(Math.PI / 2);
+      const dockCasing = new THREE.Mesh(dockCasingGeo, this.paintRedMat);
+      dockCasing.position.set(side * 1.62, 1.05, 0.0);
+      this.group.add(dockCasing);
+
+      // Inner cream/white dial face
+      const dockDialGeo = new THREE.CylinderGeometry(0.78, 0.78, 0.08, 28);
       dockDialGeo.rotateZ(Math.PI / 2);
-      const dockDial = new THREE.Mesh(dockDialGeo, this.darkWoodMat);
-      dockDial.position.set(side * 1.60, 1.05, 0.0);
+      const dockDial = new THREE.Mesh(dockDialGeo, this.hullMat);
+      dockDial.position.set(side * 1.64, 1.05, 0.0);
       this.group.add(dockDial);
 
-      const dockRimGeo = new THREE.TorusGeometry(0.48, 0.045, 8, 24);
+      // Gold outer rim ring
+      const dockRimGeo = new THREE.TorusGeometry(0.95, 0.055, 10, 32);
       dockRimGeo.rotateY(Math.PI / 2);
       const dockRim = new THREE.Mesh(dockRimGeo, this.goldMat);
-      dockRim.position.set(side * 1.62, 1.05, 0.0);
+      dockRim.position.set(side * 1.66, 1.05, 0.0);
       this.group.add(dockRim);
 
-      // Red paddlewheel casing
-      const paddleCasingGeo = new THREE.BoxGeometry(0.18, 0.72, 1.35);
+      // Inner gold ring
+      const innerRimGeo = new THREE.TorusGeometry(0.45, 0.035, 8, 24);
+      innerRimGeo.rotateY(Math.PI / 2);
+      const innerRim = new THREE.Mesh(innerRimGeo, this.goldMat);
+      innerRim.position.set(side * 1.66, 1.05, 0.0);
+      this.group.add(innerRim);
+
+      // Number "1" sun emblem center (golden circle with rays)
+      const sunCenterGeo = new THREE.CylinderGeometry(0.18, 0.18, 0.06, 16);
+      sunCenterGeo.rotateZ(Math.PI / 2);
+      const sunCenter = new THREE.Mesh(sunCenterGeo, this.sunnyOrangeMat);
+      sunCenter.position.set(side * 1.67, 1.05, 0.0);
+      this.group.add(sunCenter);
+
+      // Sun rays around center (8 small rays)
+      for (let r = 0; r < 8; r++) {
+        const rayAngle = (r / 8) * Math.PI * 2;
+        const rayGeo = new THREE.BoxGeometry(0.04, 0.06, 0.18);
+        const ray = new THREE.Mesh(rayGeo, this.sunnyOrangeMat);
+        ray.position.set(
+          side * 1.67,
+          1.05 + Math.sin(rayAngle) * 0.28,
+          0.0 + Math.cos(rayAngle) * 0.28
+        );
+        ray.rotation.x = rayAngle;
+        this.group.add(ray);
+      }
+
+      // Red paddlewheel housing (rectangular casing around the dock)
+      const paddleCasingGeo = new THREE.BoxGeometry(0.20, 1.05, 2.0);
       const paddleCasing = new THREE.Mesh(paddleCasingGeo, this.paintRedMat);
-      paddleCasing.position.set(side * 1.63, 0.75, 0.0);
+      paddleCasing.position.set(side * 1.63, 0.72, 0.0);
       this.group.add(paddleCasing);
     });
 

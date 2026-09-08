@@ -66,6 +66,7 @@ export class Experience {
 
       this.camera.resize();
       this.renderer.resize();
+      if (this.world?.ship?.resize) this.world.ship.resize();
     });
   }
 

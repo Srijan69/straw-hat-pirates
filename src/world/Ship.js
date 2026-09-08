@@ -13,12 +13,12 @@ export class Ship {
     this.time = 0;
 
     // Staging parameters - Majestic frontal 3/4 heroic composition: Sunny lion prow faces viewer proudly
-    this.baseX = 8.6;
-    this.baseZ = 0.0;
+    this.baseX = 12.8;
+    this.baseZ = -0.8;
     this.baseRotationY = 0.28; // ~16 degrees: lion figurehead and Jolly Roger sail face camera heroically
 
     // Deep natural water draft immersion
-    this.draftOffset = -0.78; // Hull sits naturally immersed with sheer stripe and lion prow gleaming above water
+    this.draftOffset = -0.68; // Hull sits naturally immersed with sheer stripe and lion prow gleaming above water
     this.targetY = this.draftOffset;
     this.targetPitch = 0;
     this.targetRoll = 0;
@@ -34,6 +34,7 @@ export class Ship {
       sailFlutter: 1.0
     };
 
+    this.updateBasePositionForScreen();
     this.createMaterials();
     this.buildShipModel();
     this.scene.add(this.group);
@@ -792,60 +793,39 @@ export class Ship {
     maneRing.position.z = -0.12;
     figureheadGroup.add(maneRing);
 
-    // Bowsprit Extending Forward & Gently Upward
-    const bowspritLength = 4.2;
-    const bowspritGeo = new THREE.CylinderGeometry(0.09, 0.18, bowspritLength, 12);
-    bowspritGeo.rotateX(Math.PI / 2);
-    bowspritGeo.translate(0, 0, bowspritLength / 2);
-    const bowspritMesh = new THREE.Mesh(bowspritGeo, this.hullMat);
-    bowspritMesh.rotation.x = -0.32;
-    bowspritMesh.position.set(0, 0.35, 0.2);
-    bowspritMesh.castShadow = true;
-    figureheadGroup.add(bowspritMesh);
-
-    // Golden Reinforcing Bands along Bowsprit
-    [1.2, 2.4, 3.6].forEach((bz) => {
-      const bandGeo = new THREE.TorusGeometry(0.14, 0.025, 8, 16);
-      const band = new THREE.Mesh(bandGeo, this.goldMat);
-      band.position.set(0, 0.35 + bz * Math.sin(0.32), 0.2 + bz * Math.cos(0.32));
-      band.rotation.x = -0.32;
-      figureheadGroup.add(band);
-    });
-
     this.group.add(figureheadGroup);
 
     // ----------------------------------------------------
-    // 8. Triangular Jib Staysails
+    // 8. Triangular Jib Staysails (Anchored to Forecastle Deck)
     // ----------------------------------------------------
-    this.createJibSail(0, 2.7, 5.8, 0, 7.2, 2.8, 0, 3.3, 3.7);
-    this.createJibSail(0, 3.8, 7.8, 0, 8.4, 2.8, 0, 4.4, 4.8);
+    this.createJibSail(0, 2.7, 4.5, 0, 6.2, 2.8, 0, 3.2, 3.4);
 
     // ----------------------------------------------------
-    // 9. Three Tiered Masts with Observation Dome Crow's Nest
+    // 9. Authentic Thousand Sunny Masts & Observation Dome
     // ----------------------------------------------------
     // Mainmast (Center - displaying iconic Straw Hat Jolly Roger on billowing sunny canvas)
-    this.createMast(0, 2.18, 0.1, 9.6, 4.2, 3.3, true, true);
+    this.createMast(0, 2.18, 0.1, 7.6, 4.0, 2.8, true, true);
 
     // Foremast (Forward - displaying yellow/orange striped topsail)
-    this.createMast(0, 2.52, 2.8, 7.8, 3.4, 2.6, false, false);
+    this.createMast(0, 2.52, 2.8, 6.2, 3.2, 2.2, false, false);
 
     // Mizzenmast (Aft on cabin - clean sunny sail)
-    this.createMast(0, 4.18, -3.1, 5.9, 2.5, 1.9, false, false);
+    this.createMast(0, 4.18, -3.1, 4.2, 2.0, 1.4, false, false);
 
     // Standing Rigging: Shrouds with Realistic Ratlines
-    this.createShroudsWithRatlines(-1.52, 2.2, 0.1, 0, 8.6, 0.1);
-    this.createShroudsWithRatlines(1.52, 2.2, 0.1, 0, 8.6, 0.1);
-    this.createShroudsWithRatlines(-1.48, 2.4, 2.8, 0, 7.0, 2.8);
-    this.createShroudsWithRatlines(1.48, 2.4, 2.8, 0, 7.0, 2.8);
+    this.createShroudsWithRatlines(-1.52, 2.2, 0.1, 0, 6.8, 0.1);
+    this.createShroudsWithRatlines(1.52, 2.2, 0.1, 0, 6.8, 0.1);
+    this.createShroudsWithRatlines(-1.48, 2.4, 2.8, 0, 5.6, 2.8);
+    this.createShroudsWithRatlines(1.48, 2.4, 2.8, 0, 5.6, 2.8);
 
-    // Heavy Forestays from Masts to Bowsprit
-    this.createRopeStay(0, 7.0, 2.8, 0, 4.0, 8.2);
-    this.createRopeStay(0, 8.6, 0.1, 0, 6.4, 2.8);
+    // Heavy Forestays from Masts to Bow
+    this.createRopeStay(0, 5.6, 2.8, 0, 2.7, 4.5);
+    this.createRopeStay(0, 6.8, 0.1, 0, 5.0, 2.8);
 
     // ----------------------------------------------------
     // 10. Warm Brass Deck Lanterns
     // ----------------------------------------------------
-    this.createOrnateLantern(0, 3.7, 4.9);
+    this.createOrnateLantern(0, 3.7, 4.8);
     this.createOrnateLantern(-1.52, 2.55, 0.2);
     this.createOrnateLantern(1.52, 2.55, 0.2);
     this.createOrnateLantern(0, 4.75, -4.5);
@@ -1237,14 +1217,14 @@ export class Ship {
     mastGroup.add(cap);
 
     // Pirate Pennant Flag at Mast Top
-    const flagGeo = new THREE.PlaneGeometry(1.25, 0.72);
+    const flagGeo = new THREE.PlaneGeometry(0.95, 0.48);
     const flagMat = new THREE.MeshStandardMaterial({
       color: 0xdc2626,
       roughness: 0.6,
       side: THREE.DoubleSide
     });
     const flagMesh = new THREE.Mesh(flagGeo, flagMat);
-    flagMesh.position.set(0.62, height + 0.25, 0);
+    flagMesh.position.set(0.48, height + 0.12, 0);
     mastGroup.add(flagMesh);
 
     // Main Square Sail
@@ -1364,5 +1344,32 @@ export class Ship {
       const dynamicYaw = this.baseRotationY + this.scrollOffset.rotationY + Math.sin(this.time * 0.32) * 0.035;
       this.group.rotation.y = lerp(this.group.rotation.y, dynamicYaw, 0.065);
     }
+  }
+
+  updateBasePositionForScreen() {
+    const width = this.experience.sizes?.width || window.innerWidth;
+    const height = this.experience.sizes?.height || window.innerHeight;
+    const aspect = width / height;
+
+    if (aspect < 1.0) {
+      // Mobile / Portrait: center ship slightly below hero text
+      this.baseX = 2.4;
+      this.baseZ = -1.2;
+      this.baseRotationY = 0.20;
+    } else if (aspect < 1.4) {
+      // Tablet / Medium square
+      this.baseX = 8.8;
+      this.baseZ = -1.0;
+      this.baseRotationY = 0.24;
+    } else {
+      // Desktop widescreen: majestic golden-ratio staging on the right
+      this.baseX = 12.8;
+      this.baseZ = -0.8;
+      this.baseRotationY = 0.28;
+    }
+  }
+
+  resize() {
+    this.updateBasePositionForScreen();
   }
 }

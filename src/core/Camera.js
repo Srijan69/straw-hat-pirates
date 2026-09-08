@@ -8,8 +8,8 @@ export class Camera {
     this.scene = experience.scene;
 
     // Base cinematic editorial staging: frames Thousand Sunny proudly in golden ratio on the right
-    this.baseTargetPosition = new THREE.Vector3(0.0, 4.4, 19.5);
-    this.baseTargetLookAt = new THREE.Vector3(3.8, 2.6, 0.2);
+    this.baseTargetPosition = new THREE.Vector3(0.0, 5.2, 21.5);
+    this.baseTargetLookAt = new THREE.Vector3(4.5, 2.8, 0.0);
 
     // Scroll-driven offsets (driven by GSAP ScrollTrigger)
     this.scrollTargetPosition = new THREE.Vector3(0, 0, 0);
@@ -17,9 +17,9 @@ export class Camera {
     this.scrollFovOffset = 0;
 
     // Combined target vectors
-    this.targetPosition = new THREE.Vector3(0.0, 4.4, 19.5);
-    this.targetLookAt = new THREE.Vector3(3.8, 2.6, 0.2);
-    this.currentLookAt = new THREE.Vector3(3.8, 2.6, 0.2);
+    this.targetPosition = new THREE.Vector3(0.0, 5.2, 21.5);
+    this.targetLookAt = new THREE.Vector3(4.5, 2.8, 0.0);
+    this.currentLookAt = new THREE.Vector3(4.5, 2.8, 0.0);
 
     this.updateBaseTargetForScreen();
     this.currentLookAt.copy(this.targetLookAt);
@@ -37,16 +37,16 @@ export class Camera {
     const aspect = this.sizes.width / this.sizes.height;
     if (aspect < 1.0) {
       // Portrait / Mobile view: pull camera back and center slightly
-      this.baseTargetPosition.set(0.0, 4.5, 23.0);
-      this.baseTargetLookAt.set(1.2, 2.2, 0.0);
+      this.baseTargetPosition.set(0.0, 4.6, 24.0);
+      this.baseTargetLookAt.set(1.4, 2.2, 0.0);
     } else if (aspect < 1.4) {
       // Tablet / Square view
-      this.baseTargetPosition.set(0.0, 4.2, 20.5);
-      this.baseTargetLookAt.set(2.4, 2.4, 0.2);
+      this.baseTargetPosition.set(0.2, 5.0, 22.5);
+      this.baseTargetLookAt.set(3.2, 2.6, 0.0);
     } else {
       // Desktop widescreen: cinematic golden-ratio staging framing the Thousand Sunny on the right
-      this.baseTargetPosition.set(0.0, 4.4, 19.5);
-      this.baseTargetLookAt.set(3.8, 2.6, 0.2);
+      this.baseTargetPosition.set(0.0, 5.2, 21.5);
+      this.baseTargetLookAt.set(4.5, 2.8, 0.0);
     }
   }
 
